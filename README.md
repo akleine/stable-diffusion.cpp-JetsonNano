@@ -1,3 +1,90 @@
+# Run  stable-diffusion.cpp on the Jetson Nano Developer Kit (4 GB, 2020)
+
+##### Compiling sd
+This commit by leejet can be compiled using CUBLAS out of the box on the Jetson Nano, no patches needed.
+For details see section ```Using CUBLAS``` below. 
+Many thanks for this excellent work!
+
+##### Run
+```
+./sd  -m ~/your-sd1.5-model.safetensors -W 384 -H 512 \
+  -v --steps 15 --taesd ~/your-taesd-model.safetensors \
+  -p "A lovely little kitten, full SD photo"
+```  
+##### Here some output parts:
+```
+[DEBUG] stable-diffusion.cpp:149  - Using CUDA backend       
+ggml_init_cublas: GGML_CUDA_FORCE_MMQ:   no
+ggml_init_cublas: CUDA_USE_TENSOR_CORES: yes
+ggml_init_cublas: found 1 CUDA devices:
+  Device 0: NVIDIA Tegra X1, compute capability 5.3, VMM: no  
+...  
+[INFO ] stable-diffusion.cpp:419  - total params memory size = 1877.65MB (VRAM 1877.65MB, RAM 0.00MB): clip 235.06MB(VRAM), unet 1640.25MB(VRAM), vae 2.34MB(VRAM), controlnet 0.00MB(VRAM), pmid 0.00MB(VRAM)
+....
+[DEBUG] ggml_extend.hpp:837  - unet compute buffer size: 325.82 MB(VRAM)
+  |==================================================| 15/15 - 14.75s/it
+[INFO ] stable-diffusion.cpp:1763 - sampling completed, taking 221.48s
+[INFO ] stable-diffusion.cpp:1771 - generating 1 latent images completed, taking 221.60s
+[INFO ] stable-diffusion.cpp:1774 - decoding 1 latents
+[DEBUG] ggml_extend.hpp:837  - taesd compute buffer size: 360.00 MB(VRAM)
+[DEBUG] stable-diffusion.cpp:1455 - computing vae [mode: DECODE] graph completed, taking 5.63s
+[INFO ] stable-diffusion.cpp:1784 - latent 1 decoded, taking 5.63s
+[INFO ] stable-diffusion.cpp:1788 - decode_first_stage completed, taking 5.63s
+[INFO ] stable-diffusion.cpp:1872 - txt2img completed in 227.73s
+save result image to 'output.png'
+```
+
+## Prerequisites
+#### Get the basic image here:
+https://github.com/Qengineering/Jetson-Nano-image
+Many thanks for this excellent work!
+
+#### uname -a
+```
+Linux nano 4.9.253-tegra #1 SMP PREEMPT Mon Jul 26 12:13:06 PDT 2021 aarch64 aarch64 aarch64 GNU/Linux
+```
+#### cat os-release 
+```
+NAME="Ubuntu"
+VERSION="20.04.6 LTS (Focal Fossa)"
+ID=ubuntu
+ID_LIKE=debian
+PRETTY_NAME="Ubuntu 20.04.6 LTS"
+VERSION_ID="20.04"
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+VERSION_CODENAME=focal
+UBUNTU_CODENAME=focal
+```
+#### gcc -v
+```
+Using built-in specs.
+COLLECT_GCC=gcc
+COLLECT_LTO_WRAPPER=/usr/local/libexec/gcc/aarch64-unknown-linux-gnu/8.5.0/lto-wrapper
+Target: aarch64-unknown-linux-gnu
+Configured with: ../configure --enable-languages=c,c++ --disable-multilib
+Thread model: posix
+gcc version 8.5.0 (GCC) 
+```
+#### cmake --version
+```
+cmake version 3.31.6
+CMake suite maintained and supported by Kitware (kitware.com/cmake).
+```
+#### nvcc --version
+```
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2021 NVIDIA Corporation
+Built on Sun_Feb_28_22:34:44_PST_2021
+Cuda compilation tools, release 10.2, V10.2.300
+Build cuda_10.2_r440.TC440_70.29663091_0
+```
+
+***
+# *Original ```README.md``` follows here*
+***
 <p align="center">
   <img src="./assets/a%20lovely%20cat.png" width="256x">
 </p>
