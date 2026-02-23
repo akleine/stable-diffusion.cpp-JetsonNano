@@ -178,6 +178,7 @@ protected:
     int num_heads                          = 8;
     int num_head_channels                  = -1;   // channels // num_heads
     int context_dim                        = 768;  // 1024 for VERSION_2_x, 2048 for VERSION_XL
+    bool tiny_unet                         = false;
 
 public:
     int model_channels  = 320;
@@ -185,7 +186,7 @@ public:
 
     UnetModelBlock(SDVersion version = VERSION_1_x)
         : version(version) {
-        if (version == VERSION_2_x) {
+        if (sd_version_is_sd2(version)) {
             context_dim       = 1024;
             num_head_channels = 64;
             num_heads         = -1;
@@ -204,6 +205,15 @@ public:
             num_head_channels = 64;
             num_heads         = -1;
         }
+        if (version == VERSION_SD1_TINY_UNET || version == VERSION_SD2_TINY_UNET || version == VERSION_SDXS) {
+            num_res_blocks = 1;
+            channel_mult   = {1, 2, 4};
+            tiny_unet      = true;
+            if (version == VERSION_SDXS) {
+                attention_resolutions = {4, 2};  // here just like SDXL
+            }
+        }
+
         // dims is always 2
         // use_temporal_attention is always True for SVD
 
@@ -270,6 +280,9 @@ public:
                                                                                       context_dim));
                 }
                 input_block_chans.push_back(ch);
+                if (tiny_unet) {
+                    input_block_idx++;
+                }
             }
             if (i != len_mults - 1) {
                 input_block_idx += 1;
@@ -288,14 +301,15 @@ public:
             d_head = num_head_channels;
             n_head = ch / d_head;
         }
-        blocks["middle_block.0"] = std::shared_ptr<GGMLBlock>(get_resblock(ch, time_embed_dim, ch));
-        blocks["middle_block.1"] = std::shared_ptr<GGMLBlock>(get_attention_layer(ch,
-                                                                                  n_head,
-                                                                                  d_head,
-                                                                                  transformer_depth[transformer_depth.size() - 1],
-                                                                                  context_dim));
-        blocks["middle_block.2"] = std::shared_ptr<GGMLBlock>(get_resblock(ch, time_embed_dim, ch));
-
+        if (!tiny_unet) {
+            blocks["middle_block.0"] = std::shared_ptr<GGMLBlock>(get_resblock(ch, time_embed_dim, ch));
+            blocks["middle_block.1"] = std::shared_ptr<GGMLBlock>(get_attention_layer(ch,
+                                                                                      n_head,
+                                                                                      d_head,
+                                                                                      transformer_depth[transformer_depth.size() - 1],
+                                                                                      context_dim));
+            blocks["middle_block.2"] = std::shared_ptr<GGMLBlock>(get_resblock(ch, time_embed_dim, ch));
+        }
         // output_blocks
         int output_block_idx = 0;
         for (int i = (int)len_mults - 1; i >= 0; i--) {
@@ -323,6 +337,12 @@ public:
                 }
 
                 if (i > 0 && j == num_res_blocks) {
+                    if (tiny_unet) {
+                        output_block_idx++;
+                        if (output_block_idx == 2) {
+                            up_sample_idx = 1;
+                        }
+                    }
                     std::string name = "output_blocks." + std::to_string(output_block_idx) + "." + std::to_string(up_sample_idx);
                     blocks[name]     = std::shared_ptr<GGMLBlock>(new UpSampleBlock(ch, ch));
 
@@ -370,6 +390,7 @@ public:
             return block->forward(ctx, x, context);
         }
     }
+
 
     struct ggml_tensor* forward(struct ggml_context* ctx,
                                 struct ggml_tensor* x,
@@ -454,6 +475,9 @@ public:
                 }
                 hs.push_back(h);
             }
+            if (tiny_unet) {
+                 input_block_idx++;
+            }
             if (i != len_mults - 1) {
                 ds *= 2;
                 input_block_idx += 1;
@@ -468,10 +492,11 @@ public:
         // [N, 4*model_channels, h/8, w/8]
 
         // middle_block
-        h = resblock_forward("middle_block.0", ctx, h, emb, num_video_frames);             // [N, 4*model_channels, h/8, w/8]
-        h = attention_layer_forward("middle_block.1", ctx, h, context, num_video_frames);  // [N, 4*model_channels, h/8, w/8]
-        h = resblock_forward("middle_block.2", ctx, h, emb, num_video_frames);             // [N, 4*model_channels, h/8, w/8]
-
+        if (!tiny_unet) {
+            h = resblock_forward("middle_block.0", ctx, h, emb, num_video_frames);             // [N, 4*model_channels, h/8, w/8]
+            h = attention_layer_forward("middle_block.1", ctx, h, context, num_video_frames);  // [N, 4*model_channels, h/8, w/8]
+            h = resblock_forward("middle_block.2", ctx, h, emb, num_video_frames);             // [N, 4*model_channels, h/8, w/8]
+        }
         if (controls.size() > 0) {
             auto cs = ggml_scale_inplace(ctx, controls[controls.size() - 1], control_strength);
             h       = ggml_add(ctx, h, cs);  // middle control
@@ -507,6 +532,12 @@ public:
                 }
 
                 if (i > 0 && j == num_res_blocks) {
+                    if (tiny_unet) {
+                        output_block_idx++;
+                        if (output_block_idx == 2) {
+                            up_sample_idx = 1;
+                        }
+                    }
                     std::string name = "output_blocks." + std::to_string(output_block_idx) + "." + std::to_string(up_sample_idx);
                     auto block       = std::dynamic_pointer_cast<UpSampleBlock>(blocks[name]);
 

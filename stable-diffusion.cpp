@@ -29,6 +29,9 @@ const char* model_version_to_str[] = {
     "2.x",
     "XL",
     "SVD",
+    "SD 1.x Tiny UNet",
+    "SD 2.x Tiny UNet",
+    "SDXS",
 };
 
 const char* sampling_methods_str[] = {
@@ -424,7 +427,7 @@ public:
 
         // check is_using_v_parameterization_for_sd2
         bool is_using_v_parameterization = false;
-        if (version == VERSION_2_x) {
+        if (sd_version_is_sd2(version)) {
             if (is_using_v_parameterization_for_sd2(ctx)) {
                 is_using_v_parameterization = true;
             }

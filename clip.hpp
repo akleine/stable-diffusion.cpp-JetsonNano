@@ -284,7 +284,7 @@ public:
                 tokens.push_back(EOS_TOKEN_ID);
                 if (padding) {
                     int pad_token_id = PAD_TOKEN_ID;
-                    if (version == VERSION_2_x) {
+                    if (sd_version_is_sd2(version)) {
                         pad_token_id = 0;
                     }
                     tokens.insert(tokens.end(), max_length - tokens.size(), pad_token_id);
@@ -917,14 +917,14 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
         : GGMLModule(backend, wtype), version(version), tokenizer(version) {
         if (clip_skip <= 0) {
             clip_skip = 1;
-            if (version == VERSION_2_x || version == VERSION_XL) {
+            if (sd_version_is_sd2(version) || version == VERSION_XL) {
                 clip_skip = 2;
             }
         }
-        if (version == VERSION_1_x) {
+        if (sd_version_is_sd1(version)) {
             text_model = CLIPTextModel(OPENAI_CLIP_VIT_L_14, clip_skip);
             text_model.init(params_ctx, wtype);
-        } else if (version == VERSION_2_x) {
+        } else if (sd_version_is_sd2(version)) {
             text_model = CLIPTextModel(OPEN_CLIP_VIT_H_14, clip_skip);
             text_model.init(params_ctx, wtype);
         } else if (version == VERSION_XL) {
@@ -1179,7 +1179,7 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
 
             if (padding) {
                 int pad_token_id = PAD_TOKEN_ID;
-                if (version == VERSION_2_x) {
+                if (sd_version_is_sd2) {
                     pad_token_id = 0;
                 }
                 tokens.insert(tokens.end(), length - tokens.size(), pad_token_id);

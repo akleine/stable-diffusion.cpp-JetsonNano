@@ -22,8 +22,26 @@ enum SDVersion {
     VERSION_2_x,
     VERSION_XL,
     VERSION_SVD,
+    VERSION_SD1_TINY_UNET,
+    VERSION_SD2_TINY_UNET,
+    VERSION_SDXS,
+
     VERSION_COUNT,
 };
+
+static inline bool sd_version_is_sd1(SDVersion version) {
+    if (version == VERSION_1_x || version == VERSION_SD1_TINY_UNET || version == VERSION_SDXS) {
+        return true;
+    }
+    return false;
+}
+
+static inline bool sd_version_is_sd2(SDVersion version) {
+    if (version == VERSION_2_x || version == VERSION_SD2_TINY_UNET) {
+        return true;
+    }
+    return false;
+}
 
 struct TensorStorage {
     std::string name;
