@@ -245,6 +245,7 @@ protected:
     int64_t context_dim;
     int64_t n_head;
     int64_t d_head;
+    bool xtra_dim = false;
 
 public:
     CrossAttention(int64_t query_dim,
@@ -257,6 +258,11 @@ public:
           context_dim(context_dim) {
         int64_t inner_dim = d_head * n_head;
 
+        if (context_dim == 320 && d_head == 320) {
+            // LOG_DEBUG("CrossAttention: temp set dim to 1024 for sdxs_09");
+            xtra_dim    = true;
+            context_dim = 1024;
+        }
         blocks["to_q"] = std::shared_ptr<GGMLBlock>(new Linear(query_dim, inner_dim, false));
         blocks["to_k"] = std::shared_ptr<GGMLBlock>(new Linear(context_dim, inner_dim, false));
         blocks["to_v"] = std::shared_ptr<GGMLBlock>(new Linear(context_dim, inner_dim, false));
@@ -284,6 +290,11 @@ public:
         q      = ggml_cont(ctx, ggml_permute(ctx, q, 0, 2, 1, 3));      // [N, n_head, n_token, d_head]
         q      = ggml_reshape_3d(ctx, q, d_head, n_token, n_head * n);  // [N * n_head, n_token, d_head]
 
+        if (xtra_dim) {
+            // LOG_DEBUG("CrossAttention: temp set dim to 1024 for sdxs_09");
+            context->ne[0] = 1024;  // patch dim
+        }
+
         auto k = to_k->forward(ctx, context);                             // [N, n_context, inner_dim]
         k      = ggml_reshape_4d(ctx, k, d_head, n_head, n_context, n);   // [N, n_context, n_head, d_head]
         k      = ggml_cont(ctx, ggml_permute(ctx, k, 0, 2, 1, 3));        // [N, n_head, n_context, d_head]
@@ -293,6 +304,10 @@ public:
         v      = ggml_reshape_4d(ctx, v, d_head, n_head, n_context, n);   // [N, n_context, n_head, d_head]
         v      = ggml_cont(ctx, ggml_permute(ctx, v, 1, 2, 0, 3));        // [N, n_head, d_head, n_context]
         v      = ggml_reshape_3d(ctx, v, n_context, d_head, n_head * n);  // [N * n_head, d_head, n_context]
+
+        if (xtra_dim) {
+            context->ne[0] = 320;  // reset dim to orig
+        }
 
         auto kqv = ggml_nn_attention(ctx, q, k, v, false);  // [N * n_head, n_token, d_head]
         kqv      = ggml_reshape_4d(ctx, kqv, d_head, n_token, n_head, n);
