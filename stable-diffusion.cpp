@@ -246,7 +246,7 @@ public:
                 vae_type = GGML_TYPE_F32;  // avoid nan, not work...
             }
 
-            if (!use_tiny_autoencoder) {
+            if (!use_tiny_autoencoder && version != VERSION_SDXS) {
                 if (vae_on_cpu && !ggml_backend_is_cpu(backend)) {
                     LOG_INFO("VAE Autoencoder: Using CPU backend");
                     vae_backend = ggml_backend_cpu_init();
@@ -258,6 +258,10 @@ public:
                 first_stage_model->get_param_tensors(tensors, "first_stage_model");
             } else {
                 tae_first_stage = std::make_shared<TinyAutoEncoder>(backend, model_data_type, vae_decode_only);
+                if (version == VERSION_SDXS) {
+                        tae_first_stage->alloc_params_buffer();
+                        tae_first_stage->get_param_tensors(tensors, "first_stage_model");
+                    }
             }
             // first_stage_model->get_param_tensors(tensors, "first_stage_model.");
 
@@ -326,7 +330,7 @@ public:
 
         std::set<std::string> ignore_tensors;
         tensors["alphas_cumprod"] = alphas_cumprod_tensor;
-        if (use_tiny_autoencoder) {
+        if (use_tiny_autoencoder || version == VERSION_SDXS) {
             ignore_tensors.insert("first_stage_model.");
         }
         if (stacked_id) {
@@ -357,12 +361,13 @@ public:
             size_t clip_params_mem_size = cond_stage_model->get_params_buffer_size();
             size_t unet_params_mem_size = diffusion_model->get_params_buffer_size();
             size_t vae_params_mem_size  = 0;
-            if (!use_tiny_autoencoder) {
+            if (!use_tiny_autoencoder && version != VERSION_SDXS) {
                 vae_params_mem_size = first_stage_model->get_params_buffer_size();
             } else {
-                if (!tae_first_stage->load_from_file(taesd_path)) {
+                if (use_tiny_autoencoder && !tae_first_stage->load_from_file(taesd_path)) {
                     return false;
                 }
+                use_tiny_autoencoder = true;  // now the processing is identical for VERSION_SDXS
                 vae_params_mem_size = tae_first_stage->get_params_buffer_size();
             }
             size_t control_net_params_mem_size = 0;

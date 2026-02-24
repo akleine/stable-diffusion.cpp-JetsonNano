@@ -227,6 +227,10 @@ struct TinyAutoEncoder : public GGMLModule {
         return success;
     }
 
+    void get_param_tensors(std::map<std::string, struct ggml_tensor*>& tensors, const std::string prefix) {
+        taesd.get_param_tensors(tensors, prefix);
+    }
+
     struct ggml_cgraph* build_graph(struct ggml_tensor* z, bool decode_graph) {
         struct ggml_cgraph* gf  = ggml_new_graph(compute_ctx);
         z                       = to_backend(z);
