@@ -917,7 +917,7 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
         : GGMLModule(backend, wtype), version(version), tokenizer(version) {
         if (clip_skip <= 0) {
             clip_skip = 1;
-            if (sd_version_is_sd2(version) || version == VERSION_XL) {
+            if (sd_version_is_sd2(version) || sd_version_is_sdxl(version)) {
                 clip_skip = 2;
             }
         }
@@ -927,7 +927,7 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
         } else if (sd_version_is_sd2(version)) {
             text_model = CLIPTextModel(OPEN_CLIP_VIT_H_14, clip_skip);
             text_model.init(params_ctx, wtype);
-        } else if (version == VERSION_XL) {
+        } else if (sd_version_is_sdxl(version)) {
             text_model  = CLIPTextModel(OPENAI_CLIP_VIT_L_14, clip_skip, false);
             text_model2 = CLIPTextModel(OPEN_CLIP_VIT_BIGG_14, clip_skip, false);
             text_model.init(params_ctx, wtype);
@@ -941,14 +941,14 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
 
     void set_clip_skip(int clip_skip) {
         text_model.set_clip_skip(clip_skip);
-        if (version == VERSION_XL) {
+        if (sd_version_is_sdxl(version)) {
             text_model2.set_clip_skip(clip_skip);
         }
     }
 
     void get_param_tensors(std::map<std::string, struct ggml_tensor*>& tensors, const std::string prefix) {
         text_model.get_param_tensors(tensors, prefix + "transformer.text_model");
-        if (version == VERSION_XL) {
+        if (sd_version_is_sdxl(version)) {
             text_model2.get_param_tensors(tensors, prefix + "1.transformer.text_model");
         }
     }
@@ -1017,7 +1017,7 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
 
         auto hidden_states = text_model.forward(ctx, input_ids, embeddings);  // [N, n_token, hidden_size]
         // LOG_DEBUG("hidden_states: %d %d %d %d", hidden_states->ne[0], hidden_states->ne[1], hidden_states->ne[2], hidden_states->ne[3]);
-        if (version == VERSION_XL) {
+        if (sd_version_is_sdxl(version)) {
             hidden_states = ggml_reshape_4d(ctx,
                                             hidden_states,
                                             hidden_states->ne[0],
@@ -1058,7 +1058,7 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
 
         struct ggml_tensor* embeddings = NULL;
 
-        if (num_custom_embeddings > 0 && version != VERSION_XL) {
+        if (num_custom_embeddings > 0 && !sd_version_is_sdxl(version)) {
             auto custom_embeddings = ggml_new_tensor_3d(compute_ctx,
                                                         wtype,
                                                         text_model.hidden_size,

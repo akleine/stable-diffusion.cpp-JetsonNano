@@ -33,6 +33,8 @@ const char* model_version_to_str[] = {
     "SD 2.x Tiny UNet",
     "SDXS-512-DS",
     "SDXS 0.9",
+    "SDXL (Vega)",
+    "SDXL (SSD1B)",
 };
 
 const char* sampling_methods_str[] = {
@@ -202,7 +204,7 @@ public:
         LOG_INFO("Stable Diffusion weight type: %s", ggml_type_name(model_data_type));
         LOG_DEBUG("ggml tensor size = %d bytes", (int)sizeof(ggml_tensor));
 
-        if (version == VERSION_XL) {
+        if (sd_version_is_sdxl(version)) {
             scale_factor = 0.13025f;
             if (vae_path.size() == 0 && taesd_path.size() == 0) {
                 LOG_WARN(
@@ -243,7 +245,7 @@ public:
             diffusion_model->get_param_tensors(tensors, "model.diffusion_model");
 
             ggml_type vae_type = model_data_type;
-            if (version == VERSION_XL) {
+            if (sd_version_is_sdxl(version)) {
                 vae_type = GGML_TYPE_F32;  // avoid nan, not work...
             }
 
@@ -259,10 +261,10 @@ public:
                 first_stage_model->get_param_tensors(tensors, "first_stage_model");
             } else {
                 tae_first_stage = std::make_shared<TinyAutoEncoder>(backend, model_data_type, vae_decode_only);
-                if (version == VERSION_SDXS || version == VERSION_SDXS_09 ){
-                        tae_first_stage->alloc_params_buffer();
-                        tae_first_stage->get_param_tensors(tensors, "first_stage_model");
-                    }
+                if (version == VERSION_SDXS || version == VERSION_SDXS_09) {
+                    tae_first_stage->alloc_params_buffer();
+                    tae_first_stage->get_param_tensors(tensors, "first_stage_model");
+                }
             }
             // first_stage_model->get_param_tensors(tensors, "first_stage_model.");
 
@@ -369,7 +371,7 @@ public:
                     return false;
                 }
                 use_tiny_autoencoder = true;  // now the processing is identical for VERSION_SDXS/-09
-                vae_params_mem_size = tae_first_stage->get_params_buffer_size();
+                vae_params_mem_size  = tae_first_stage->get_params_buffer_size();
             }
             size_t control_net_params_mem_size = 0;
             if (control_net) {
@@ -662,7 +664,7 @@ public:
             auto input_ids                 = vector_to_ggml_tensor_i32(work_ctx, chunk_tokens);
             struct ggml_tensor* input_ids2 = NULL;
             size_t max_token_idx           = 0;
-            if (version == VERSION_XL) {
+            if (sd_version_is_sdxl(version)) {
                 auto it = std::find(chunk_tokens.begin(), chunk_tokens.end(), EOS_TOKEN_ID);
                 if (it != chunk_tokens.end()) {
                     std::fill(std::next(it), chunk_tokens.end(), 0);
@@ -679,7 +681,7 @@ public:
             }
 
             cond_stage_model->compute(n_threads, input_ids, input_ids2, max_token_idx, false, &chunk_hidden_states, work_ctx);
-            if (version == VERSION_XL && chunk_idx == 0) {
+            if (sd_version_is_sdxl(version) && chunk_idx == 0) {
                 cond_stage_model->compute(n_threads, input_ids, input_ids2, max_token_idx, true, &pooled, work_ctx);
             }
             // if (pooled != NULL) {
@@ -720,7 +722,7 @@ public:
                                         ggml_nelements(hidden_states) / chunk_hidden_states->ne[0]);
 
         ggml_tensor* vec = NULL;
-        if (version == VERSION_XL) {
+        if (sd_version_is_sdxl(version)) {
             int out_dim = 256;
             vec         = ggml_new_tensor_1d(work_ctx, GGML_TYPE_F32, diffusion_model->unet.adm_in_channels);
             // [0:1280]
@@ -1696,7 +1698,7 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
     struct ggml_tensor* uc_vector = NULL;
     if (cfg_scale != 1.0) {
         bool force_zero_embeddings = false;
-        if (sd_ctx->sd->version == VERSION_XL && negative_prompt.size() == 0) {
+        if (sd_version_is_sdxl(sd_ctx->sd->version) && negative_prompt.size() == 0) {
             force_zero_embeddings = true;
         }
         auto uncond_pair = sd_ctx->sd->get_learned_condition(work_ctx, negative_prompt, clip_skip, width, height, force_zero_embeddings);
