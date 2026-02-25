@@ -1,17 +1,34 @@
-# Run  stable-diffusion.cpp on the Jetson Nano Developer Kit (4 GB, 2020)
+# Run  stable-diffusion.cpp on the Jetson Nano Developer Kit 4GB
 
-##### Compiling sd
-This commit by leejet can be compiled using CUBLAS out of the box on the Jetson Nano, no patches needed.
-For details see section ```Using CUBLAS``` below. 
-Many thanks for this excellent work!
+#### Running and compiling sd
 
-##### Run
+This commit by leejet is the last in a series of commits that can be compiled using CUBLAS ```out of the box``` on the Jetson Nano, no patches needed. Many thanks for this excellent work!
+For details on compilation see section ```Using CUBLAS``` below.
+Later sd.cpp commits ( https://github.com/leejet/stable-diffusion.cpp ) are expecting a more up-to-date nvcc compiler and higher GPU performance, which  Jetson's  ```NVIDIA Tegra X1``` lacks.
+
+**Of course you will only run ```tiny models``` on this ```tiny device```, see below.**
+**Also do not try to extend the output picture dimensions much more than 512 x 512.**
+
+#### Prerequisites
+
+You will need the following software installed, consider the installation of gcc and cmake might take several hours.
+
+* Ubuntu 20.04 OS
+* GCC and CXX (g++) 8.5
+* cmake >= 3.2
+* Nvidia CUDA Compiler nvcc 10.2
+
+See here for some details on [Jetson Nano environment](./docs/prerequisites_on_JetsonNano.md)
+
+
+#### Run example:
 ```
 ./sd  -m ~/your-sd1.5-model.safetensors -W 384 -H 512 \
   -v --steps 15 --taesd ~/your-taesd-model.safetensors \
   -p "A lovely little kitten, full SD photo"
 ```  
-##### Here some output parts:
+
+#### Here are some output parts:
 ```
 [DEBUG] stable-diffusion.cpp:149  - Using CUDA backend       
 ggml_init_cublas: GGML_CUDA_FORCE_MMQ:   no
@@ -34,53 +51,19 @@ ggml_init_cublas: found 1 CUDA devices:
 save result image to 'output.png'
 ```
 
-## Prerequisites
-#### Get the basic image here:
-https://github.com/Qengineering/Jetson-Nano-image
-Many thanks for this excellent work!
+#### Download model weights and run them:
 
-#### uname -a
-```
-Linux nano 4.9.253-tegra #1 SMP PREEMPT Mon Jul 26 12:13:06 PDT 2021 aarch64 aarch64 aarch64 GNU/Linux
-```
-#### cat os-release 
-```
-NAME="Ubuntu"
-VERSION="20.04.6 LTS (Focal Fossa)"
-ID=ubuntu
-ID_LIKE=debian
-PRETTY_NAME="Ubuntu 20.04.6 LTS"
-VERSION_ID="20.04"
-HOME_URL="https://www.ubuntu.com/"
-SUPPORT_URL="https://help.ubuntu.com/"
-BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
-PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
-VERSION_CODENAME=focal
-UBUNTU_CODENAME=focal
-```
-#### gcc -v
-```
-Using built-in specs.
-COLLECT_GCC=gcc
-COLLECT_LTO_WRAPPER=/usr/local/libexec/gcc/aarch64-unknown-linux-gnu/8.5.0/lto-wrapper
-Target: aarch64-unknown-linux-gnu
-Configured with: ../configure --enable-languages=c,c++ --disable-multilib
-Thread model: posix
-gcc version 8.5.0 (GCC) 
-```
-#### cmake --version
-```
-cmake version 3.31.6
-CMake suite maintained and supported by Kitware (kitware.com/cmake).
-```
-#### nvcc --version
-```
-nvcc: NVIDIA (R) Cuda compiler driver
-Copyright (c) 2005-2021 NVIDIA Corporation
-Built on Sun_Feb_28_22:34:44_PST_2021
-Cuda compilation tools, release 10.2, V10.2.300
-Build cuda_10.2_r440.TC440_70.29663091_0
-```
+Beside SD1.5 using some other **tiny models** are recommended (the list order is meaningless) :
+* https://huggingface.co/nota-ai/bk-sdm-tiny
+* https://huggingface.co/nota-ai/bk-sdm-v2-tiny
+* https://huggingface.co/segmind/tiny-sd
+* https://huggingface.co/segmind/portrait-finetuned
+* https://huggingface.co/IDKiro/sdxs-512-dreamshaper
+* https://huggingface.co/IDKiro/sdxs-512-0.9
+
+Perhaps there are some more usable models out there on the net. Naturally, IDKiro's models will be the fastest, because they need only one step in U-Net. For example using sdxs-512-dreamshaper you create a 512 x 512 png picture file within **12 seconds** !
+But all models have certain advantages and limits. You are invited to check them all. If you consider the Jetson Nano has only 4GB shared RAM available you won't expect to run bigger model files.
+
 
 ***
 # *Original ```README.md``` follows here*
