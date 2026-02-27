@@ -35,6 +35,9 @@ const char* model_version_to_str[] = {
     "SDXS 0.9",
     "SDXL (Vega)",
     "SDXL (SSD1B)",
+    "SD 1.x Medium UNet",
+    "SD 1.x Small UNet",
+
 };
 
 const char* sampling_methods_str[] = {

@@ -208,15 +208,17 @@ public:
             num_head_channels = 64;
             num_heads         = -1;
         }
-        if (version == VERSION_SD1_TINY_UNET || version == VERSION_SD2_TINY_UNET || version == VERSION_SDXS || version == VERSION_SDXS_09) {
+        if (version == VERSION_SD1_TINY_UNET || version == VERSION_SD2_TINY_UNET || version == VERSION_SDXS ||
+            version == VERSION_SDXS_09 || version == VERSION_SD1_MEDIUM_UNET || version == VERSION_SD1_SMALL_UNET) {
             num_res_blocks = 1;
-            channel_mult   = {1, 2, 4};
             tiny_unet      = true;
+            if (version != VERSION_SD1_MEDIUM_UNET && version != VERSION_SD1_SMALL_UNET) {
+                channel_mult   = {1, 2, 4};
+            }
             if (version == VERSION_SDXS) {
                 attention_resolutions = {4, 2};  // here just like SDXL
             }
         }
-
         // dims is always 2
         // use_temporal_attention is always True for SVD
 
@@ -314,7 +316,7 @@ public:
             d_head = num_head_channels;
             n_head = ch / d_head;
         }
-        if (!tiny_unet) {
+        if (!tiny_unet || version == VERSION_SD1_MEDIUM_UNET) {
             blocks["middle_block.0"] = std::shared_ptr<GGMLBlock>(get_resblock(ch, time_embed_dim, ch));
             if (version != VERSION_SDXL_SSD1B && version != VERSION_SDXL_VEGA) {
                 blocks["middle_block.1"] = std::shared_ptr<GGMLBlock>(get_attention_layer(ch,
@@ -514,7 +516,7 @@ public:
         // [N, 4*model_channels, h/8, w/8]
 
         // middle_block
-        if (!tiny_unet) {
+        if (!tiny_unet || version == VERSION_SD1_MEDIUM_UNET) {
             h = resblock_forward("middle_block.0", ctx, h, emb, num_video_frames);  // [N, 4*model_channels, h/8, w/8]
             if (version != VERSION_SDXL_SSD1B && version != VERSION_SDXL_VEGA) {
                 h = attention_layer_forward("middle_block.1", ctx, h, context, num_video_frames);  // [N, 4*model_channels, h/8, w/8]

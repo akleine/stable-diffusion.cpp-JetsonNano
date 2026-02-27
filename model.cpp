@@ -1308,6 +1308,8 @@ SDVersion ModelLoader::get_sd_version() {
     bool has_middle_block_1   = false;
     bool has_output_block_311 = false;
     bool has_output_block_71  = false;
+    bool has_output_block_81  = false;
+    bool has_output_block_91  = false;
     bool has_attn_1024        = false;
     bool is_xl                = false;
 
@@ -1332,6 +1334,13 @@ SDVersion ModelLoader::get_sd_version() {
         if (tensor_storage.name.find("model.diffusion_model.output_blocks.7.1") != std::string::npos) {
             has_output_block_71 = true;
         }
+        if (tensor_storage.name.find("model.diffusion_model.output_blocks.8.1.transformer_blocks") != std::string::npos) {
+            has_output_block_81 = true;
+        }
+        if (tensor_storage.name.find("model.diffusion_model.output_blocks.9.1") != std::string::npos) {
+            has_output_block_91 = true;
+        }
+
         if (tensor_storage.name.find("model.diffusion_model.output_blocks.7.1.transformer_blocks.0.attn1.to_k.weight") != std::string::npos) {
             if (tensor_storage.ne[0] == 1024) {
                 has_attn_1024 = true;
@@ -1360,8 +1369,16 @@ SDVersion ModelLoader::get_sd_version() {
         if (!has_middle_block_1) {
             if (!has_output_block_71) {
                 return VERSION_SDXS;
+            } else {
+                if (!has_output_block_91) {
+                    return VERSION_SD1_TINY_UNET;
+                }
+            return VERSION_SD1_SMALL_UNET;
             }
-            return VERSION_SD1_TINY_UNET;
+        }
+
+        if (!has_output_block_81) {
+            return VERSION_SD1_MEDIUM_UNET;
         }
         return VERSION_1_x;
     } else if (token_embedding_weight.ne[0] == 1024) {
