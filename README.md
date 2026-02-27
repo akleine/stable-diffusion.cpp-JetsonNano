@@ -1,10 +1,17 @@
-# Run  stable-diffusion.cpp on the Jetson Nano Developer Kit 4GB
+# Run stable-diffusion.cpp on the Jetson Nano Developer Kit 4GB
 
-#### Running and compiling sd
+**Generate images from a text prompt with just one command**
 
-This commit by leejet is the last in a series of commits that can be compiled using CUBLAS ```out of the box``` on the Jetson Nano, no patches needed. Many thanks for this excellent work!
-For details on compilation see section ```Using CUBLAS``` below.
-Later sd.cpp commits ( https://github.com/leejet/stable-diffusion.cpp ) are expecting a more up-to-date nvcc compiler and higher GPU performance, which  Jetson's  ```NVIDIA Tegra X1``` lacks.
+Read general notes about stable-diffusion.cpp here in [original README.md](#original-README)
+
+
+#### Compiling sd on the Jetson Nano
+
+Later sd.cpp commits ( https://github.com/leejet/stable-diffusion.cpp ) are expecting a more up-to-date nvcc compiler and better GPU capabilities, which Jetson's  ```NVIDIA Tegra X1``` lacks,
+the CUDA version is 10.2.  This commit by leejet is the last in a long series of commits that can be compiled using CUBLAS ```out of the box``` on the Jetson Nano, no patches are needed. Many thanks for this excellent work!
+For details on compilation see section ```Using CUBLAS``` below in leejet's original README.
+
+#### Running sd on the Jetson Nano
 
 **Of course you will only run ```tiny models``` on this ```tiny device```, see below.**
 **Also do not try to extend the output picture dimensions much more than 512 x 512.**
@@ -54,19 +61,23 @@ save result image to 'output.png'
 #### Download model weights and run them:
 
 Beside SD1.5 using some other **tiny models** are recommended (the list order is meaningless) :
-* https://huggingface.co/nota-ai/bk-sdm-tiny
-* https://huggingface.co/nota-ai/bk-sdm-v2-tiny
+
 * https://huggingface.co/segmind/tiny-sd
 * https://huggingface.co/segmind/portrait-finetuned
+* https://huggingface.co/nota-ai/bk-sdm-tiny
+* https://huggingface.co/nota-ai/bk-sdm-v2-tiny
+* https://huggingface.co/nota-ai/bk-sdm-small
+* https://huggingface.co/nota-ai/bk-sdm-base
+* https://huggingface.co/OFA-Sys/small-stable-diffusion-v0
 * https://huggingface.co/IDKiro/sdxs-512-dreamshaper
 * https://huggingface.co/IDKiro/sdxs-512-0.9
 
 Perhaps there are some more usable models out there on the net. Naturally, IDKiro's models will be the fastest, because they need only one step in U-Net. For example using sdxs-512-dreamshaper you create a 512 x 512 png picture file within **12 seconds** !
-But all models have certain advantages and limits. You are invited to check them all. If you consider the Jetson Nano has only 4GB shared RAM available you won't expect to run bigger model files.
+But all models have certain advantages and limits. You are invited to check them all. If you consider the Jetson Nano has only 4GB shared RAM (GPU/CPU) available you won't expect to run bigger model files.
 
 
 ***
-# *Original ```README.md``` follows here*
+# original-README
 ***
 <p align="center">
   <img src="./assets/a%20lovely%20cat.png" width="256x">
