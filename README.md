@@ -1,20 +1,18 @@
 # Run stable-diffusion.cpp on the Jetson Nano Developer Kit 4GB
 
-**Generate images from a text prompt with just one command**
+#### Purpose
 
-Read general notes about stable-diffusion.cpp here in [original README.md](#original-README)
-
+Generate images from a text prompt with just one command!
+Read more notes about stable-diffusion.cpp below in [original README](#original-README)
 
 #### Compiling sd on the Jetson Nano
 
-Later sd.cpp commits ( https://github.com/leejet/stable-diffusion.cpp ) are expecting a more up-to-date nvcc compiler and better GPU capabilities, which Jetson's  ```NVIDIA Tegra X1``` lacks,
-the CUDA version is 10.2.  This commit by leejet is the last in a long series of commits that can be compiled using CUBLAS ```out of the box``` on the Jetson Nano, no patches are needed. Many thanks for this excellent work!
-For details on compilation see section ```Using CUBLAS``` below in leejet's original README.
+Later sd.cpp commits ( https://github.com/leejet/stable-diffusion.cpp ) are expecting a more up-to-date nvcc compiler, CUDA-toolkit 11+ and better GPU capabilities, which Jetson's  ```NVIDIA Tegra X1``` lacks. The highest possible CUDA version on Jetson Nano is 10.2. This fork is based on commit e1384de by leejet, the last of a long row of usable commits. It can be easy compiled using CUBLAS ```out of the box``` on the Jetson Nano, no patches are needed. Many thanks for this excellent work! For details on compilation see section ```Using CUBLAS``` below in leejet's original README.
 
 #### Running sd on the Jetson Nano
 
-**Of course you will only run ```tiny models``` on this ```tiny device```, see below.**
-**Also do not try to extend the output picture dimensions much more than 512 x 512.**
+Of course you will only run ```tiny models``` on this ```tiny device```, see below.
+Also do not try to extend the output picture dimensions much more than ```512 x 512```.
 
 #### Prerequisites
 
@@ -65,10 +63,12 @@ Beside SD1.5 using some other **tiny models** are recommended (the list order is
 * https://huggingface.co/segmind/tiny-sd
 * https://huggingface.co/segmind/portrait-finetuned
 * https://huggingface.co/nota-ai/bk-sdm-tiny
-* https://huggingface.co/nota-ai/bk-sdm-v2-tiny
 * https://huggingface.co/nota-ai/bk-sdm-small
 * https://huggingface.co/nota-ai/bk-sdm-base
 * https://huggingface.co/OFA-Sys/small-stable-diffusion-v0
+* https://huggingface.co/nota-ai/bk-sdm-v2-tiny
+* https://huggingface.co/nota-ai/bk-sdm-v2-small
+* https://huggingface.co/nota-ai/bk-sdm-v2-base
 * https://huggingface.co/IDKiro/sdxs-512-dreamshaper
 * https://huggingface.co/IDKiro/sdxs-512-0.9
 

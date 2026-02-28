@@ -23,13 +23,15 @@ enum SDVersion {
     VERSION_XL,
     VERSION_SVD,
     VERSION_SD1_TINY_UNET,
+    VERSION_SD1_MEDIUM_UNET,
+    VERSION_SD1_SMALL_UNET,
     VERSION_SD2_TINY_UNET,
+    VERSION_SD2_MEDIUM_UNET,
+    VERSION_SD2_SMALL_UNET,
     VERSION_SDXS,
     VERSION_SDXS_09,
     VERSION_SDXL_VEGA,
     VERSION_SDXL_SSD1B,
-    VERSION_SD1_MEDIUM_UNET,
-    VERSION_SD1_SMALL_UNET,
 
     VERSION_COUNT,
 };
@@ -42,7 +44,7 @@ static inline bool sd_version_is_sd1(SDVersion version) {
 }
 
 static inline bool sd_version_is_sd2(SDVersion version) {
-    if (version == VERSION_2_x || version == VERSION_SD2_TINY_UNET || version == VERSION_SDXS_09) {
+    if (version == VERSION_2_x || version == VERSION_SD2_TINY_UNET || version == VERSION_SDXS_09 || version == VERSION_SD2_MEDIUM_UNET || version == VERSION_SD2_SMALL_UNET) {
         return true;
     }
     return false;

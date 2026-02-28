@@ -30,13 +30,15 @@ const char* model_version_to_str[] = {
     "XL",
     "SVD",
     "SD 1.x Tiny UNet",
+    "SD 1.x Medium UNet",
+    "SD 1.x Small UNet",
     "SD 2.x Tiny UNet",
+    "SD 2.x Medium UNet",
+    "SD 2.x Small UNet",
     "SDXS-512-DS",
     "SDXS 0.9",
     "SDXL (Vega)",
     "SDXL (SSD1B)",
-    "SD 1.x Medium UNet",
-    "SD 1.x Small UNet",
 
 };
 

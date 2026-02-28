@@ -1373,17 +1373,26 @@ SDVersion ModelLoader::get_sd_version() {
                 if (!has_output_block_91) {
                     return VERSION_SD1_TINY_UNET;
                 }
-            return VERSION_SD1_SMALL_UNET;
+                return VERSION_SD1_SMALL_UNET;
             }
         }
-
         if (!has_output_block_81) {
             return VERSION_SD1_MEDIUM_UNET;
         }
         return VERSION_1_x;
     } else if (token_embedding_weight.ne[0] == 1024) {
         if (!has_middle_block_1) {
-            return has_attn_1024 ? VERSION_SDXS_09 : VERSION_SD2_TINY_UNET;
+            if (has_attn_1024) {
+                return VERSION_SDXS_09;
+            } else {
+                if (!has_output_block_91) {
+                    return VERSION_SD2_TINY_UNET;
+                }
+                return VERSION_SD2_SMALL_UNET;
+            }
+        }
+        if (!has_output_block_81) {
+            return VERSION_SD2_MEDIUM_UNET;
         }
         return VERSION_2_x;
     }
