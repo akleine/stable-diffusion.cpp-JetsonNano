@@ -3,6 +3,9 @@
 ### Purpose
 
 **Generate images from a text prompt with just one command!**
+<p align="center">
+  <img src="./assets/another_relaxed_cat.png">
+</p>
 Read more notes about stable-diffusion.cpp below in original [README](#original-README)
 
 ### Compiling sd on the Jetson Nano
