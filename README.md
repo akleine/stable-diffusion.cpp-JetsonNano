@@ -1,20 +1,20 @@
 # Run stable-diffusion.cpp on the Jetson Nano Developer Kit 4GB
 
-#### Purpose
+### Purpose
 
-Generate images from a text prompt with just one command!
-Read more notes about stable-diffusion.cpp below in [original README](#original-README)
+**Generate images from a text prompt with just one command!**
+Read more notes about stable-diffusion.cpp below in original [README](#original-README)
 
-#### Compiling sd on the Jetson Nano
+### Compiling sd on the Jetson Nano
 
-Later sd.cpp commits ( https://github.com/leejet/stable-diffusion.cpp ) are expecting a more up-to-date nvcc compiler, CUDA-toolkit 11+ and better GPU capabilities, which Jetson's  ```NVIDIA Tegra X1``` lacks. The highest possible CUDA version on Jetson Nano is 10.2. This fork is based on commit e1384de by leejet, the last of a long row of usable commits. It can be easy compiled using CUBLAS ```out of the box``` on the Jetson Nano, no patches are needed. Many thanks for this excellent work! For details on compilation see section ```Using CUBLAS``` below in leejet's original README.
+Later sd.cpp ( https://github.com/leejet/stable-diffusion.cpp ) commits are expecting a more up-to-date nvcc compiler, CUDA-toolkit 11+ and better GPU capabilities, which Jetson's  ```NVIDIA Tegra X1``` lacks. The highest possible CUDA version on Jetson Nano is 10.2. This fork is based on leejet's commit #e1384de, ( https://github.com/leejet/stable-diffusion.cpp/commit/e1384defcaeea53ad714487afcff38b7e582d9b1 ), the last in a long row of usable commits. It can be easy compiled using CUBLAS ```out of the box``` on the Jetson Nano, no patches are needed. Many thanks for this excellent work! For details on compilation see section ```Using CUBLAS``` below in leejet's [README](#original-README) .
 
-#### Running sd on the Jetson Nano
+### Running sd on the Jetson Nano
 
 Of course you will only run ```tiny models``` on this ```tiny device```, see below.
 Also do not try to extend the output picture dimensions much more than ```512 x 512```.
 
-#### Prerequisites
+### Prerequisites
 
 You will need the following software installed, consider the installation of gcc and cmake might take several hours.
 
@@ -26,14 +26,13 @@ You will need the following software installed, consider the installation of gcc
 See here for some details on [Jetson Nano environment](./docs/prerequisites_on_JetsonNano.md)
 
 
-#### Run example:
+### Run example:
 ```
 ./sd  -m ~/your-sd1.5-model.safetensors -W 384 -H 512 \
   -v --steps 15 --taesd ~/your-taesd-model.safetensors \
   -p "A lovely little kitten, full SD photo"
 ```  
-
-#### Here are some output parts:
+Here are some output parts:
 ```
 [DEBUG] stable-diffusion.cpp:149  - Using CUDA backend       
 ggml_init_cublas: GGML_CUDA_FORCE_MMQ:   no
@@ -56,7 +55,7 @@ ggml_init_cublas: found 1 CUDA devices:
 save result image to 'output.png'
 ```
 
-#### Download model weights and run them:
+### Download model weights and run them:
 
 Beside SD1.5 using some other **tiny models** are recommended (the list order is meaningless) :
 
@@ -73,7 +72,31 @@ Beside SD1.5 using some other **tiny models** are recommended (the list order is
 * https://huggingface.co/IDKiro/sdxs-512-0.9
 
 Perhaps there are some more usable models out there on the net. Naturally, IDKiro's models will be the fastest, because they need only one step in U-Net. For example using sdxs-512-dreamshaper you create a 512 x 512 png picture file within **12 seconds** !
-But all models have certain advantages and limits. You are invited to check them all. If you consider the Jetson Nano has only 4GB shared RAM (GPU/CPU) available you won't expect to run bigger model files.
+But all models have certain advantages and limits. You are invited to check them all. If you consider the Jetson Nano has only 4GB shared RAM (GPU/CPU) available, you won't expect to run bigger model files.
+It is recommended to convert these models into **safetensors** format. Creating a **.safetensors** file involves two steps, for details see some hints in https://github.com/leejet/stable-diffusion.cpp/blob/master/docs/distilled_sd.md .
+
+### Issues
+
+Sometimes you will receive this error message:
+```
+CUDA error: the launch timed out and was terminated
+  current device: 0, in function ggml_backend_cuda_get_tensor_async at /home/jetson/stable-diffusion.cpp-JetsonNano_GIT/ggml/src/ggml-cuda.cu:12222
+  cudaMemcpyAsync(data, (const char *)tensor->data + offset, size, cudaMemcpyDeviceToHost, g_cudaStreams[cuda_ctx->device][0])
+GGML_ASSERT: /home/jetson/stable-diffusion.cpp-JetsonNano_GIT/ggml/src/ggml-cuda.cu:255: !"CUDA error"
+...
+#2  0x0000000000551ff8 in ggml_cuda_error(char const*, char const*, char const*, int, char const*) [clone .constprop.467] ()
+#3  0x0000000000572594 in ggml_backend_cuda_get_tensor_async(ggml_backend*, ggml_tensor const*, void*, unsigned long, unsigned long) ()
+#4  0x000000000047db30 in GGMLModule::compute(std::function<ggml_cgraph* ()>, int, bool, ggml_tensor**, ggml_context*) ()
+#5  0x000000000047deec in UNetModel::compute(int, ggml_tensor*, ggml_tensor*, ggml_tensor*, ggml_tensor*, ggml_tensor*, int, ....
+...
+```
+A workaround is to disable the GPU timeout watchdog:
+```
+sudo bash -c "echo N > /sys/kernel/debug/gpu.0/timeouts_enabled"
+```
+Read more about this in NVIDIA's developer forum:
+* https://forums.developer.nvidia.com/t/how-to-disable-tdr-in-jetson-nano/203270
+* https://forums.developer.nvidia.com/t/disabling-runtime-execution-limit/168938
 
 
 ***
