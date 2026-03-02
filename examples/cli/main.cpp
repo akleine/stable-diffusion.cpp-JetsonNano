@@ -883,10 +883,10 @@ int main(int argc, const char* argv[]) {
             continue;
         }
         std::string final_image_path = i > 0 ? dummy_name + "_" + std::to_string(i + 1) + ".png" : dummy_name + ".png";
-        stbi_write_png(final_image_path.c_str(), results[i].width, results[i].height, results[i].channel,
-                       results[i].data, 0, get_image_params(params, params.seed + i).c_str());
-        printf("save result image to '%s'\n", final_image_path.c_str());
+        int write_ok = stbi_write_png(final_image_path.c_str(), results[i].width, results[i].height, results[i].channel,
+                   results[i].data, 0, get_image_params(params, params.seed + i).c_str());
         free(results[i].data);
+        printf("save result PNG image to '%s' (%s)\n", final_image_path.c_str(), write_ok == 0 ? "failure" : "success");
         results[i].data = NULL;
     }
     free(results);
