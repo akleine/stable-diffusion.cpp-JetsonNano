@@ -8,7 +8,7 @@ Example:  _"a relaxed nice cat, full SD photo"_
 <p align="left">
   <img src="./assets/another_relaxed_cat.png">
 </p>
-Read more notes about stable-diffusion.cpp below in leejet's original [README](#original-README) .
+Read more notes about stable-diffusion.cpp below in leejet's original README below.
 
 ### Compiling sd on the Jetson Nano
 
