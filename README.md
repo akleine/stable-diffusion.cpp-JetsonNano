@@ -8,17 +8,17 @@ Example:  _"a relaxed nice cat, full SD photo"_
 <p align="left">
   <img src="./assets/another_relaxed_cat.png">
 </p>
-Read more notes about stable-diffusion.cpp below in leejet's original [README](#original-README) .
+Read more notes about stable-diffusion.cpp below in leejet's original README.
 
 ## Compiling sd on the Jetson Nano
 
-Later sd.cpp commits ( https://github.com/leejet/stable-diffusion.cpp ) require a more up-to-date NVCC compiler, CUDA Toolkit 11+, and improved GPU capabilities, which the Jetson's NVIDIA Tegra X1 lacks. The highest CUDA version supported on the Jetson Nano is 10.2. This fork is based on leejet's commit #e1384de  ( https://github.com/leejet/stable-diffusion.cpp/commit/e1384de ), the last in a long series of usable commits. It can be easily compiled using CUBLAS out of the box on the Jetson Nano, no patches are needed. Many thanks for this excellent work! For detailed compilation instructions, see the "Using CUBLAS" section below in leejet's original README.
+Later sd.cpp commits ( https://github.com/leejet/stable-diffusion.cpp ) require a more up-to-date NVCC compiler, CUDA Toolkit 11+, and improved GPU capabilities, which the Jetson's NVIDIA Tegra X1 lacks. The highest CUDA version supported on the Jetson Nano is 10.2. This fork is based on leejet's commit #e1384de  ( https://github.com/leejet/stable-diffusion.cpp/commit/e1384de ), the last in a long series of usable commits. It can be easily compiled using CUBLAS out of the box on the Jetson Nano, no patches are needed. Many thanks for this excellent work! For detailed compilation instructions, see section ```Using CUBLAS``` below in leejet's [README](#original-README) .
 
 
 ## Running sd on the Jetson Nano
 
 Of course you will only run *tiny* models on this *tiny* device, see below.
-If using f16 tensors do not try to extend the output picture dimensions much more than ```512 x 512```. For resolutiions like ```512 x 768``` try weight types like ```q4_0``` (via option ```--type q4_0```).
+If using f16 tensors do not try to extend the output picture dimensions much more than ```512 x 512```. For resolutions like ```512 x 768``` or models like Segmind's VEGA or SSD1B try weight types like ```q4_0``` (via option ```--type q4_0```).
 
 ### Prerequisites
 
@@ -76,6 +76,8 @@ Beside SD1.5 using some other **tiny models** are recommended (the list order is
 * https://huggingface.co/nota-ai/bk-sdm-v2-base
 * https://huggingface.co/IDKiro/sdxs-512-dreamshaper
 * https://huggingface.co/IDKiro/sdxs-512-0.9
+* https://huggingface.co/segmind/SSD-1B
+* https://huggingface.co/segmind/Segmind-Vega
 
 There may be other usable models available online. Naturally, IDKiro's models will be the fastest since they require only one step in U-Net. For example, using sdxs-512-dreamshaper, you can generate a 512x512 PNG image in just 12 seconds! However, each model has its own advantages and limitations. Feel free to explore them all. However, all models have their own advantages and limitations. We encourage you to explore them all. Keep in mind that since the Jetson Nano has only 4GB of shared RAM (GPU/CPU), running some larger models may not be feasible. 
 It is recommended to convert these models into the **safetensors** format. Creating a .safetensors file involves two steps, please see some hints in  https://github.com/leejet/stable-diffusion.cpp/blob/master/docs/distilled_sd.md for detailed instructions.
