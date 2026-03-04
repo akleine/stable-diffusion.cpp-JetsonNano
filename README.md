@@ -1,6 +1,6 @@
 # Run stable-diffusion.cpp on the Jetson Nano Developer Kit 4GB
 
-### Purpose
+## Purpose
 
 **Generate images from a text prompt with just one command!**
 
@@ -8,16 +8,17 @@ Example:  _"a relaxed nice cat, full SD photo"_
 <p align="left">
   <img src="./assets/another_relaxed_cat.png">
 </p>
-Read more notes about stable-diffusion.cpp below in leejet's original README below.
+Read more notes about stable-diffusion.cpp below in leejet's original [README](#original-README) .
 
-### Compiling sd on the Jetson Nano
+## Compiling sd on the Jetson Nano
 
-Later sd.cpp ( https://github.com/leejet/stable-diffusion.cpp ) commits are expecting a more up-to-date nvcc compiler, CUDA-toolkit 11+ and better GPU capabilities, which Jetson's  ```NVIDIA Tegra X1``` lacks. The highest possible CUDA version on Jetson Nano is 10.2. This fork is based on leejet's commit #e1384de, ( https://github.com/leejet/stable-diffusion.cpp/commit/e1384defcaeea53ad714487afcff38b7e582d9b1 ), the last in a long row of usable commits. It can be easy compiled using CUBLAS ```out of the box``` on the Jetson Nano, no patches are needed. Many thanks for this excellent work! For details on compilation see section ```Using CUBLAS``` below in leejet's [README](#original-README) .
+Later sd.cpp commits ( https://github.com/leejet/stable-diffusion.cpp ) require a more up-to-date NVCC compiler, CUDA Toolkit 11+, and improved GPU capabilities, which the Jetson's NVIDIA Tegra X1 lacks. The highest CUDA version supported on the Jetson Nano is 10.2. This fork is based on leejet's commit #e1384de  ( https://github.com/leejet/stable-diffusion.cpp/commit/e1384de ), the last in a long series of usable commits. It can be easily compiled using CUBLAS out of the box on the Jetson Nano, no patches are needed. Many thanks for this excellent work! For detailed compilation instructions, see the "Using CUBLAS" section below in leejet's original README.
 
-### Running sd on the Jetson Nano
 
-Of course you will only run ```tiny models``` on this ```tiny device```, see below.
-Also do not try to extend the output picture dimensions much more than ```512 x 512```.
+## Running sd on the Jetson Nano
+
+Of course you will only run *tiny* models on this *tiny* device, see below.
+If using f16 tensors do not try to extend the output picture dimensions much more than ```512 x 512```. For resolutiions like ```512 x 768``` try weight types like ```q4_0``` (via option ```--type q4_0```).
 
 ### Prerequisites
 
@@ -76,9 +77,8 @@ Beside SD1.5 using some other **tiny models** are recommended (the list order is
 * https://huggingface.co/IDKiro/sdxs-512-dreamshaper
 * https://huggingface.co/IDKiro/sdxs-512-0.9
 
-Perhaps there are some more usable models out there on the net. Naturally, IDKiro's models will be the fastest, because they need only one step in U-Net. For example using sdxs-512-dreamshaper you create a 512 x 512 png picture file within **12 seconds** !
-But all models have certain advantages and limits. You are invited to check them all. If you consider the Jetson Nano has only 4GB shared RAM (GPU/CPU) available, you won't expect to run bigger model files.
-It is recommended to convert these models into **safetensors** format. Creating a **.safetensors** file involves two steps, for details see some hints in https://github.com/leejet/stable-diffusion.cpp/blob/master/docs/distilled_sd.md .
+There may be other usable models available online. Naturally, IDKiro's models will be the fastest since they require only one step in U-Net. For example, using sdxs-512-dreamshaper, you can generate a 512x512 PNG image in just 12 seconds! However, each model has its own advantages and limitations. Feel free to explore them all. However, all models have their own advantages and limitations. We encourage you to explore them all. Keep in mind that since the Jetson Nano has only 4GB of shared RAM (GPU/CPU), running some larger models may not be feasible. 
+It is recommended to convert these models into the **safetensors** format. Creating a .safetensors file involves two steps, please see some hints in  https://github.com/leejet/stable-diffusion.cpp/blob/master/docs/distilled_sd.md for detailed instructions.
 
 ### Issues
 
