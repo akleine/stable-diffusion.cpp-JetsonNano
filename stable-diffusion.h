@@ -203,6 +203,9 @@ SD_API uint8_t* preprocess_canny(uint8_t* img,
                                  float strong,
                                  bool inverse);
 
+SD_API const char* sd_commit(void);
+SD_API const char* sd_version(void);
+
 #ifdef __cplusplus
 }
 #endif

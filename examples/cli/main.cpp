@@ -152,6 +152,10 @@ void print_params(SDParams params) {
     printf("    upscale_repeats:   %d\n", params.upscale_repeats);
 }
 
+static std::string version_string() {
+    return std::string("stable-diffusion.cpp version ") + sd_version() + ", commit " + sd_commit();
+}
+
 void print_usage(int argc, const char* argv[]) {
     printf("usage: %s [arguments]\n", argv[0]);
     printf("\n");
@@ -201,6 +205,7 @@ void print_usage(int argc, const char* argv[]) {
     printf("  --canny                            apply canny preprocessor (edge detection)\n");
     printf("  --color                            Colors the logging tags according to level\n");
     printf("  -v, --verbose                      print extra info\n");
+    printf("  --version                          print stable-diffusion.cpp version\n");
 }
 
 void parse_args(int argc, const char** argv, SDParams& params) {
@@ -627,12 +632,18 @@ void sd_log_cb(enum sd_log_level_t level, const char* log, void* data) {
 }
 
 int main(int argc, const char* argv[]) {
+
+    if (argc > 1 && std::string(argv[1]) == "--version") {
+        std::cout << version_string() << "\n";
+        return EXIT_SUCCESS;
+    }
     SDParams params;
     parse_args(argc, argv, params);
 
     sd_set_log_callback(sd_log_cb, (void*)&params);
 
     if (params.verbose) {
+        std::cout << version_string() << "\n";
         print_params(params);
         printf("%s", sd_get_system_info());
     }
