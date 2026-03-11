@@ -1584,6 +1584,9 @@ bool ModelLoader::load_tensors(on_new_tensor_cb_t on_new_tensor_cb, ggml_backend
             size_t tensor_max = processed_tensor_storages.size();
             pretty_progress(++tensor_count, tensor_max, (t2 - t1) / 1000.0f);
             partial = tensor_count != tensor_max;
+            if (partial) {
+                printf("\r");
+            }
             t1      = t2;
         }
 
