@@ -10,9 +10,9 @@ Read more notes about stable-diffusion.cpp below in leejet's original README.
 
 ## Compiling sd on the Jetson Nano
 
-Later sd.cpp commits ( https://github.com/leejet/stable-diffusion.cpp ) require a more up-to-date NVCC compiler, CUDA Toolkit 11+, and improved GPU capabilities, which the Jetson's NVIDIA Tegra X1 lacks. The highest CUDA version supported on the Jetson Nano is 10.2. This fork is based on leejet's commit #e1384de  ( https://github.com/leejet/stable-diffusion.cpp/commit/e1384de ), the last in a long series of usable commits. It can be easily compiled using CUBLAS out of the box on the Jetson Nano, no patches are needed. Many thanks for this excellent work! For detailed compilation instructions, see section ```Using CUBLAS``` below in leejet's [README](#original-README) .
-
-<span style="color:red">**Many commits from the newer sd.cpp versions have been backported to this particular fork**.</span> Most of these concern the operation of SD1/2.x models and some tiny derivatives. Due to the limited RAM in the Jetson Nano, the backporting of more advanced models (SD3, Z-Image etc.) was not done.
+Later sd.cpp (https://github.com/leejet/stable-diffusion.cpp) commits require a more up-to-date NVCC compiler, CUDA Toolkit 11+, and improved GPU capabilities, which the Jetson's NVIDIA Tegra X1 lacks. The highest CUDA version supported on the Jetson Nano is 10.2. This fork is based on leejet's commit #e1384de (https://github.com/leejet/stable-diffusion.cpp/commit/e1384de), the last in a long series of usable commits. It can be easily compiled using CUBLAS out of the box on the Jetson Nano, no patches are needed. Many thanks for this excellent work! For detailed compilation instructions, see section ```Using CUBLAS``` below in leejet's [README](#original-README) .
+Many commits from the newer sd.cpp versions have been backported to this particular fork.**
+Most of these concern the operation of SD1/2.x models and some tiny derivatives. Due to the limited shared RAM in the Jetson Nano, the backporting of more advanced models (SD3, Z-Image etc.) was not done.
 
 ## Running sd on the Jetson Nano
 
@@ -78,8 +78,8 @@ Beside SD1.5 using some other **tiny models** are recommended (the list order is
 * https://huggingface.co/segmind/SSD-1B
 * https://huggingface.co/segmind/Segmind-Vega
 
-There may be other usable models available online. Naturally, IDKiro's models will be the fastest since they require only one step in U-Net. For example, using sdxs-512-dreamshaper, you can generate a 512x512 PNG image in just 12 seconds! However, each model has its own advantages and limitations. Feel free to explore them all. However, all models have their own advantages and limitations. We encourage you to explore them all. Keep in mind that since the Jetson Nano has only 4GB of shared RAM (GPU/CPU), running some larger models may not be feasible. 
-It is recommended to convert these models into the **safetensors** format. Creating a .safetensors file involves two steps, please see some hints in  https://github.com/leejet/stable-diffusion.cpp/blob/master/docs/distilled_sd.md for detailed instructions.
+There may be other usable models available online. Naturally, IDKiro's models will be the fastest since they require only one step in U-Net. For example, using sdxs-512-dreamshaper, you can generate a 512x512 PNG image in just 12 seconds! However, each model has its own advantages and limitations. Feel free to explore them all. Keep in mind that since the Jetson Nano has only 4GB of shared RAM (GPU/CPU), running some larger models may not be feasible.
+It is recommended to convert these models into the **safetensors** format. Creating a .safetensors file involves two steps, please see some hints in https://github.com/leejet/stable-diffusion.cpp/blob/master/docs/distilled_sd.md for detailed instructions.
 
 ### Issues
 

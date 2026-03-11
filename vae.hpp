@@ -552,7 +552,7 @@ struct AutoEncoderKL : public GGMLModule {
         };
         // ggml_set_f32(z, 0.5f);
         // print_ggml_tensor(z);
-        GGMLModule::compute(get_graph, n_threads, true, output, output_ctx);
+        GGMLModule::compute(get_graph, n_threads, false, output, output_ctx);
     }
 
     void test() {
