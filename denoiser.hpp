@@ -180,13 +180,13 @@ struct AYSSchedule : SigmaSchedule {
         std::vector<float> results(len + 1);
 
         switch (version) {
-            case VERSION_2_x: /* fallthrough */
+            case VERSION_SD2: /* fallthrough */
                 LOG_WARN("AYS not designed for SD2.X models");
-            case VERSION_1_x:
+            case VERSION_SD1:
                 LOG_INFO("AYS using SD1.5 noise levels");
                 inputs = noise_levels[0];
                 break;
-            case VERSION_XL:
+            case VERSION_SDXL:
                 LOG_INFO("AYS using SDXL noise levels");
                 inputs = noise_levels[1];
                 break;

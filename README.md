@@ -64,7 +64,7 @@ save result image to 'output.png'
 
 ### Download model weights and run them:
 
-Beside SD1.5 using some other **tiny models** are recommended (the list order is meaningless) :
+Beside SD1.5 using some other **tiny models** are recommended, e.g.:
 
 * https://huggingface.co/segmind/tiny-sd
 * https://huggingface.co/segmind/portrait-finetuned
@@ -79,9 +79,13 @@ Beside SD1.5 using some other **tiny models** are recommended (the list order is
 * https://huggingface.co/IDKiro/sdxs-512-0.9
 * https://huggingface.co/segmind/SSD-1B
 * https://huggingface.co/segmind/Segmind-Vega
+* https://huggingface.co/stabilityai/sd-turbo
+* https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5
 
 There may be other usable models available online. Naturally, IDKiro's models will be the fastest since they require only one step in U-Net. For example, using sdxs-512-dreamshaper, you can generate a 512x512 PNG image in just 12 seconds! However, each model has its own advantages and limitations. Feel free to explore them all. Keep in mind that since the Jetson Nano has only 4GB of shared RAM (GPU/CPU), running some larger models may not be feasible.
-It is recommended to convert these models into the **safetensors** format. Creating a .safetensors file involves two steps, please see some hints in https://github.com/leejet/stable-diffusion.cpp/blob/master/docs/distilled_sd.md for detailed instructions.
+It is recommended to convert these models into the **safetensors** or preferably into **gguf** format. Creating a .safetensors file involves two steps, please see some hints in https://github.com/leejet/stable-diffusion.cpp/blob/master/docs/distilled_sd.md for detailed instructions.
+Quantization and creating **gguf** files is very well described here: https://github.com/leejet/stable-diffusion.cpp/blob/master/docs/quantization_and_gguf.md
+
 
 ### Issues
 

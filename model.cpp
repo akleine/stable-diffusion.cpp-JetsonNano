@@ -1367,7 +1367,7 @@ SDVersion ModelLoader::get_sd_version() {
             }
             return VERSION_SDXL_SSD1B;
         }
-        return VERSION_XL;
+        return VERSION_SDXL;
     }
     if (token_embedding_weight.ne[0] == 768) {
         if (!has_middle_block_1) {
@@ -1383,7 +1383,7 @@ SDVersion ModelLoader::get_sd_version() {
         if (!has_output_block_81) {
             return VERSION_SD1_MEDIUM_UNET;
         }
-        return VERSION_1_x;
+        return VERSION_SD1;
     } else if (token_embedding_weight.ne[0] == 1024) {
         if (!has_middle_block_1) {
             if (has_attn_1024) {
@@ -1398,7 +1398,7 @@ SDVersion ModelLoader::get_sd_version() {
         if (!has_output_block_81) {
             return VERSION_SD2_MEDIUM_UNET;
         }
-        return VERSION_2_x;
+        return VERSION_SD2;
     }
     return VERSION_COUNT;
 }

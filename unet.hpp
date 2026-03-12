@@ -166,7 +166,7 @@ public:
 // ldm.modules.diffusionmodules.openaimodel.UNetModel
 class UnetModelBlock : public GGMLBlock {
 protected:
-    SDVersion version = VERSION_1_x;
+    SDVersion version = VERSION_SD1;
     // network hparams
     int in_channels                        = 4;
     int out_channels                       = 4;
@@ -177,14 +177,14 @@ protected:
     int time_embed_dim                     = 1280;  // model_channels*4
     int num_heads                          = 8;
     int num_head_channels                  = -1;   // channels // num_heads
-    int context_dim                        = 768;  // 1024 for VERSION_2_x, 2048 for VERSION_XL
+    int context_dim                        = 768;  // 1024 for VERSION_SD2, 2048 for VERSION_SDXL
     bool tiny_unet                         = false;
 
 public:
     int model_channels  = 320;
-    int adm_in_channels = 2816;  // only for VERSION_XL/SVD
+    int adm_in_channels = 2816;  // only for VERSION_SDXL/SVD
 
-    UnetModelBlock(SDVersion version = VERSION_1_x)
+    UnetModelBlock(SDVersion version = VERSION_SD1)
         : version(version) {
         if (sd_version_is_sd2(version)) {
             context_dim       = 1024;
@@ -585,12 +585,12 @@ public:
 };
 
 struct UNetModel : public GGMLModule {
-    SDVersion version = VERSION_1_x;
+    SDVersion version = VERSION_SD1;
     UnetModelBlock unet;
 
     UNetModel(ggml_backend_t backend,
               ggml_type wtype,
-              SDVersion version = VERSION_1_x)
+              SDVersion version = VERSION_SD1)
         : GGMLModule(backend, wtype), unet(version) {
         unet.init(params_ctx, wtype);
     }

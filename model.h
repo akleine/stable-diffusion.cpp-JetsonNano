@@ -18,9 +18,9 @@
 #define SD_MAX_DIMS 5
 
 enum SDVersion {
-    VERSION_1_x,
-    VERSION_2_x,
-    VERSION_XL,
+    VERSION_SD1,
+    VERSION_SD2,
+    VERSION_SDXL,
     VERSION_SVD,
     VERSION_SD1_TINY_UNET,
     VERSION_SD1_MEDIUM_UNET,
@@ -37,21 +37,21 @@ enum SDVersion {
 };
 
 static inline bool sd_version_is_sd1(SDVersion version) {
-    if (version == VERSION_1_x || version == VERSION_SD1_TINY_UNET || version == VERSION_SDXS || version == VERSION_SD1_MEDIUM_UNET || version == VERSION_SD1_SMALL_UNET) {
+    if (version == VERSION_SD1 || version == VERSION_SD1_TINY_UNET || version == VERSION_SDXS || version == VERSION_SD1_MEDIUM_UNET || version == VERSION_SD1_SMALL_UNET) {
         return true;
     }
     return false;
 }
 
 static inline bool sd_version_is_sd2(SDVersion version) {
-    if (version == VERSION_2_x || version == VERSION_SD2_TINY_UNET || version == VERSION_SDXS_09 || version == VERSION_SD2_MEDIUM_UNET || version == VERSION_SD2_SMALL_UNET) {
+    if (version == VERSION_SD2 || version == VERSION_SD2_TINY_UNET || version == VERSION_SDXS_09 || version == VERSION_SD2_MEDIUM_UNET || version == VERSION_SD2_SMALL_UNET) {
         return true;
     }
     return false;
 }
 
 static inline bool sd_version_is_sdxl(SDVersion version) {
-    if (version == VERSION_XL || version == VERSION_SDXL_SSD1B || version == VERSION_SDXL_VEGA) {
+    if (version == VERSION_SDXL || version == VERSION_SDXL_SSD1B || version == VERSION_SDXL_VEGA) {
         return true;
     }
     return false;

@@ -73,7 +73,7 @@ typedef std::function<bool(std::string&, std::vector<int32_t>&)> on_new_token_cb
 
 class CLIPTokenizer {
 private:
-    SDVersion version = VERSION_1_x;
+    SDVersion version = VERSION_SD1;
     std::map<int, std::u32string> byte_encoder;
     std::map<std::u32string, int> byte_decoder;
     std::map<std::u32string, int> encoder;
@@ -117,7 +117,7 @@ private:
     }
 
 public:
-    CLIPTokenizer(SDVersion version = VERSION_1_x)
+    CLIPTokenizer(SDVersion version = VERSION_SD1)
         : version(version) {}
 
     void load_from_merges(const std::string& merges_utf8_str) {
@@ -900,7 +900,7 @@ public:
 // ldm.modules.encoders.modules.FrozenCLIPEmbedder
 // Ref: https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/cad87bf4e3e0b0a759afa94e933527c3123d59bc/modules/sd_hijack_clip.py#L283
 struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
-    SDVersion version = VERSION_1_x;
+    SDVersion version = VERSION_SD1;
     CLIPTokenizer tokenizer;
     CLIPTextModel text_model;
     CLIPTextModel text_model2;
@@ -912,7 +912,7 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
 
     FrozenCLIPEmbedderWithCustomWords(ggml_backend_t backend,
                                       ggml_type wtype,
-                                      SDVersion version = VERSION_1_x,
+                                      SDVersion version = VERSION_SD1,
                                       int clip_skip     = -1)
         : GGMLModule(backend, wtype), version(version), tokenizer(version) {
         if (clip_skip <= 0) {
