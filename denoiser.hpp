@@ -9,7 +9,7 @@
 
 #define TIMESTEPS 1000
 
-struct SigmaSchedule {
+struct SigmaScheduler {
     float alphas_cumprod[TIMESTEPS];
     float sigmas[TIMESTEPS];
     float log_sigmas[TIMESTEPS];
@@ -52,7 +52,7 @@ struct SigmaSchedule {
     }
 };
 
-struct DiscreteSchedule : SigmaSchedule {
+struct DiscreteScheduler : SigmaScheduler {
     std::vector<float> get_sigmas(uint32_t n) {
         std::vector<float> result;
 
@@ -79,7 +79,7 @@ struct DiscreteSchedule : SigmaSchedule {
 /*
 https://research.nvidia.com/labs/toronto-ai/AlignYourSteps/howto.html
 */
-struct AYSSchedule : SigmaSchedule {
+struct AYSScheduler : SigmaScheduler {
     /* interp and linear_interp adapted from dpilger26's NumCpp library:
      * https://github.com/dpilger26/NumCpp/tree/5e40aab74d14e257d65d3dc385c9ff9e2120c60e */
     constexpr double interp(double left, double right, double perc) noexcept {
@@ -214,7 +214,24 @@ struct AYSSchedule : SigmaSchedule {
     }
 };
 
-struct KarrasSchedule : SigmaSchedule {
+struct LCMScheduler : SigmaScheduler {
+    std::vector<float> get_sigmas(uint32_t n) {
+        std::vector<float> result;
+        result.reserve(n + 1);
+        const int original_steps = 50;
+        const int k              = TIMESTEPS / original_steps;
+        for (int i = 0; i < n; i++) {
+            // the rounding ensures we match the training scheduler of the LCM model
+            int index    = (i * original_steps) / n;
+            int timestep = (original_steps - index) * k - 1;
+            result.push_back(t_to_sigma(timestep));
+        }
+        result.push_back(0.0f);
+        return result;
+    }
+};
+
+struct KarrasScheduler : SigmaScheduler {
     std::vector<float> get_sigmas(uint32_t n) {
         // These *COULD* be function arguments here,
         // but does anybody ever bother to touch them?
@@ -236,7 +253,7 @@ struct KarrasSchedule : SigmaSchedule {
 };
 
 struct Denoiser {
-    std::shared_ptr<SigmaSchedule> schedule              = std::make_shared<DiscreteSchedule>();
+    std::shared_ptr<SigmaScheduler> scheduler            = std::make_shared<DiscreteScheduler>();
     virtual std::vector<float> get_scalings(float sigma) = 0;
 };
 
@@ -262,7 +279,6 @@ struct CompVisVDenoiser : public Denoiser {
 };
 
 typedef std::function<ggml_tensor*(ggml_tensor*, float, int)> denoise_cb_t;
-
 
 // k diffusion reverse ODE: dx = (x - D(x;\sigma)) / \sigma dt; \sigma(t) = t
 void sample_k_diffusion(sample_method_t method,
@@ -401,7 +417,7 @@ void sample_k_diffusion(sample_method_t method,
                     }
 
                     ggml_tensor* denoised = model(x2, sigmas[i + 1], i + 1);
-                    float* vec_denoised = (float*)denoised->data;
+                    float* vec_denoised   = (float*)denoised->data;
                     for (int j = 0; j < ggml_nelements(x); j++) {
                         float d2 = (vec_x2[j] - vec_denoised[j]) / sigmas[i + 1];
                         vec_d[j] = (vec_d[j] + d2) / 2;
@@ -453,7 +469,7 @@ void sample_k_diffusion(sample_method_t method,
                     }
 
                     ggml_tensor* denoised = model(x2, sigma_mid, i + 1);
-                    float* vec_denoised = (float*)denoised->data;
+                    float* vec_denoised   = (float*)denoised->data;
                     for (int j = 0; j < ggml_nelements(x); j++) {
                         float d2 = (vec_x2[j] - vec_denoised[j]) / sigma_mid;
                         vec_x[j] = vec_x[j] + d2 * dt_2;

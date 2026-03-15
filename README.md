@@ -14,7 +14,7 @@ Later sd.cpp (https://github.com/leejet/stable-diffusion.cpp) commits require a 
 
 **Many commits from the newer sd.cpp versions have been backported to this particular fork.**
 
-Most of these concern the operation of SD1/2.x models and some tiny derivatives. Due to the limited shared RAM in the Jetson Nano, the backporting of more advanced models (SD3, Z-Image etc.) was not done.
+Most of these concern the operation of SD1/2.x models and some tiny derivatives. Due to the limited shared RAM in the Jetson Nano, the backporting of the inpainting feature and of more advanced models (SD3, Z-Image etc.) was not done.
 
 ## Running sd on the Jetson Nano
 

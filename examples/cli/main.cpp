@@ -38,11 +38,12 @@ const char* sample_method_str[] = {
     "lcm",
 };
 
-// Names of the sigma schedule overrides, same order as sample_schedule in stable-diffusion.h
-const char* schedule_str[] = {
+// Names of the sigma scheduler overrides, same order as sample_schedule in stable-diffusion.h
+const char* scheduler_str[] = {
     "default",
     "discrete",
     "karras",
+    "lcm",
     "ays",
 };
 
@@ -95,7 +96,7 @@ struct SDParams {
     float augmentation_level = 0.f;
 
     sample_method_t sample_method = EULER_A;
-    schedule_t schedule           = DEFAULT;
+    scheduler_t scheduler         = DEFAULT;
     int sample_steps              = 20;
     float strength                = 0.75f;
     float control_strength        = 0.9f;
@@ -142,7 +143,7 @@ void print_params(SDParams params) {
     printf("    width:             %d\n", params.width);
     printf("    height:            %d\n", params.height);
     printf("    sample_method:     %s\n", sample_method_str[params.sample_method]);
-    printf("    schedule:          %s\n", schedule_str[params.schedule]);
+    printf("    scheduler:         %s\n", scheduler_str[params.scheduler]);
     printf("    sample_steps:      %d\n", params.sample_steps);
     printf("    strength(img2img): %.2f\n", params.strength);
     printf("    rng:               %s\n", rng_type_to_str[params.rng_type]);
@@ -195,7 +196,8 @@ void print_usage(int argc, const char* argv[]) {
     printf("  --rng {std_default, cuda}          RNG (default: cuda)\n");
     printf("  -s SEED, --seed SEED               RNG seed (default: 42, use random seed for < 0)\n");
     printf("  -b, --batch-count COUNT            number of images to generate.\n");
-    printf("  --schedule {discrete, karras, ays} Denoiser sigma schedule (default: discrete)\n");
+    printf("  --scheduler {discrete, karras, ays, lcm}\n");
+    printf("                                     Denoiser sigma scheduler (default: discrete)\n");
     printf("  --clip-skip N                      ignore last layers of CLIP network; 1 ignores none, 2 ignores one layer (default: -1)\n");
     printf("                                     <= 0 represents unspecified, will be 1 for SD1.x, 2 for SD2.x\n");
     printf("  --vae-tiling                       process vae in tiles to reduce memory usage\n");
@@ -438,23 +440,23 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 invalid_arg = true;
                 break;
             }
-        } else if (arg == "--schedule") {
+        } else if (arg == "--scheduler") {
             if (++i >= argc) {
                 invalid_arg = true;
                 break;
             }
-            const char* schedule_selected = argv[i];
-            int schedule_found            = -1;
-            for (int d = 0; d < N_SCHEDULES; d++) {
-                if (!strcmp(schedule_selected, schedule_str[d])) {
-                    schedule_found = d;
+            const char* scheduler_selected = argv[i];
+            int scheduler_found            = -1;
+            for (int d = 0; d < SCHEDULER_COUNT; d++) {
+                if (!strcmp(scheduler_selected, scheduler_str[d])) {
+                    scheduler_found = d;
                 }
             }
-            if (schedule_found == -1) {
+            if (scheduler_found == -1) {
                 invalid_arg = true;
                 break;
             }
-            params.schedule = (schedule_t)schedule_found;
+            params.scheduler = (scheduler_t)scheduler_found;
         } else if (arg == "-s" || arg == "--seed") {
             if (++i >= argc) {
                 invalid_arg = true;
@@ -468,7 +470,7 @@ void parse_args(int argc, const char** argv, SDParams& params) {
             }
             const char* sample_method_selected = argv[i];
             int sample_method_found            = -1;
-            for (int m = 0; m < N_SAMPLE_METHODS; m++) {
+            for (int m = 0; m < SAMPLE_METHOD_COUNT; m++) {
                 if (!strcmp(sample_method_selected, sample_method_str[m])) {
                     sample_method_found = m;
                 }
@@ -580,7 +582,7 @@ std::string get_image_params(SDParams params, int64_t seed) {
     parameter_string += "Model: " + sd_basename(params.model_path) + ", ";
     parameter_string += "RNG: " + std::string(rng_type_to_str[params.rng_type]) + ", ";
     parameter_string += "Sampler: " + std::string(sample_method_str[params.sample_method]);
-    if (params.schedule == KARRAS) {
+    if (params.scheduler == KARRAS_SCHEDULER) {
         parameter_string += " karras";
     }
     parameter_string += ", ";
@@ -632,7 +634,6 @@ void sd_log_cb(enum sd_log_level_t level, const char* log, void* data) {
 }
 
 int main(int argc, const char* argv[]) {
-
     if (argc > 1 && std::string(argv[1]) == "--version") {
         std::cout << version_string() << "\n";
         return EXIT_SUCCESS;
@@ -641,6 +642,10 @@ int main(int argc, const char* argv[]) {
     parse_args(argc, argv, params);
 
     sd_set_log_callback(sd_log_cb, (void*)&params);
+
+    if (params.sample_method == LCM && params.scheduler == DEFAULT) {
+        params.scheduler = LCM_SCHEDULER;
+    }
 
     if (params.verbose) {
         std::cout << version_string() << "\n";
@@ -739,7 +744,7 @@ int main(int argc, const char* argv[]) {
                                   params.n_threads,
                                   params.wtype,
                                   params.rng_type,
-                                  params.schedule,
+                                  params.scheduler,
                                   params.clip_on_cpu,
                                   params.control_net_cpu,
                                   params.vae_on_cpu);

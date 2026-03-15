@@ -13,4 +13,3 @@ const char* sd_commit(void) {
 const char* sd_version(void) {
     return STRINGIZE(SDCPP_BUILD_VERSION);
 }
-

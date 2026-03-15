@@ -151,7 +151,7 @@ public:
                         const std::string& taesd_path,
                         bool vae_tiling_,
                         ggml_type wtype,
-                        schedule_t schedule,
+                        scheduler_t scheduler,
                         bool clip_on_cpu,
                         bool control_net_cpu,
                         bool vae_on_cpu) {
@@ -456,34 +456,38 @@ public:
             LOG_INFO("running in eps-prediction mode");
         }
 
-        if (schedule != DEFAULT) {
-            switch (schedule) {
-                case DISCRETE:
-                    LOG_INFO("running with discrete schedule");
-                    denoiser->schedule = std::make_shared<DiscreteSchedule>();
+        if (scheduler != DEFAULT) {
+            switch (scheduler) {
+                case DISCRETE_SCHEDULER:
+                    LOG_INFO("running with discrete scheduler");
+                    denoiser->scheduler = std::make_shared<DiscreteScheduler>();
                     break;
-                case KARRAS:
-                    LOG_INFO("running with Karras schedule");
-                    denoiser->schedule = std::make_shared<KarrasSchedule>();
+                case KARRAS_SCHEDULER:
+                    LOG_INFO("running with Karras scheduler");
+                    denoiser->scheduler = std::make_shared<KarrasScheduler>();
                     break;
-                case AYS:
-                    LOG_INFO("Running with Align-Your-Steps schedule");
-                    denoiser->schedule          = std::make_shared<AYSSchedule>();
-                    denoiser->schedule->version = version;
+                case LCM_SCHEDULER:
+                    LOG_INFO("running with LCM scheduler");
+                    denoiser->scheduler = std::make_shared<LCMScheduler>();
+                    break;
+                case AYS_SCHEDULER:
+                    LOG_INFO("Running with Align-Your-Steps schedulerr");
+                    denoiser->scheduler          = std::make_shared<AYSScheduler>();
+                    denoiser->scheduler->version = version;
                     break;
                 case DEFAULT:
                     // Don't touch anything.
                     break;
                 default:
-                    LOG_ERROR("Unknown schedule %i", schedule);
+                    LOG_ERROR("Unknown scheduler %i", scheduler);
                     abort();
             }
         }
 
         for (int i = 0; i < TIMESTEPS; i++) {
-            denoiser->schedule->alphas_cumprod[i] = ((float*)alphas_cumprod_tensor->data)[i];
-            denoiser->schedule->sigmas[i]         = std::sqrt((1 - denoiser->schedule->alphas_cumprod[i]) / denoiser->schedule->alphas_cumprod[i]);
-            denoiser->schedule->log_sigmas[i]     = std::log(denoiser->schedule->sigmas[i]);
+            denoiser->scheduler->alphas_cumprod[i] = ((float*)alphas_cumprod_tensor->data)[i];
+            denoiser->scheduler->sigmas[i]         = std::sqrt((1 - denoiser->scheduler->alphas_cumprod[i]) / denoiser->scheduler->alphas_cumprod[i]);
+            denoiser->scheduler->log_sigmas[i]     = std::log(denoiser->scheduler->sigmas[i]);
         }
 
         LOG_DEBUG("finished loaded file");
@@ -892,7 +896,6 @@ public:
             out_uncond = ggml_dup_tensor(work_ctx, x);
         }
 
-
         struct ggml_tensor* denoised = ggml_dup_tensor(work_ctx, x);
 
         auto denoise = [&](ggml_tensor* input, float sigma, int step) -> ggml_tensor* {
@@ -915,7 +918,7 @@ public:
                 c_in  = scaling[1];
             }
 
-            float t = denoiser->schedule->sigma_to_t(sigma);
+            float t = denoiser->scheduler->sigma_to_t(sigma);
             std::vector<float> timesteps_vec(x->ne[3], t);  // [N, ]
             auto timesteps = vector_to_ggml_tensor(work_ctx, timesteps_vec);
 
@@ -1005,7 +1008,6 @@ public:
         };
 
         sample_k_diffusion(method, denoise, work_ctx, x, sigmas, rng);
-
 
         if (control_net) {
             control_net->free_control_ctx();
@@ -1124,7 +1126,7 @@ sd_ctx_t* new_sd_ctx(const char* model_path_c_str,
                      int n_threads,
                      enum sd_type_t wtype,
                      enum rng_type_t rng_type,
-                     enum schedule_t s,
+                     enum scheduler_t s,
                      bool keep_clip_on_cpu,
                      bool keep_control_net_cpu,
                      bool keep_vae_on_cpu) {
@@ -1483,7 +1485,7 @@ sd_image_t* txt2img(sd_ctx_t* sd_ctx,
 
     size_t t0 = ggml_time_ms();
 
-    std::vector<float> sigmas = sd_ctx->sd->denoiser->schedule->get_sigmas(sample_steps);
+    std::vector<float> sigmas = sd_ctx->sd->denoiser->scheduler->get_sigmas(sample_steps);
 
     sd_image_t* result_images = generate_image(sd_ctx,
                                                work_ctx,
@@ -1572,7 +1574,7 @@ sd_image_t* img2img(sd_ctx_t* sd_ctx,
     size_t t1 = ggml_time_ms();
     LOG_INFO("encode_first_stage completed, taking %.2fs", (t1 - t0) * 1.0f / 1000);
 
-    std::vector<float> sigmas = sd_ctx->sd->denoiser->schedule->get_sigmas(sample_steps);
+    std::vector<float> sigmas = sd_ctx->sd->denoiser->scheduler->get_sigmas(sample_steps);
     size_t t_enc              = static_cast<size_t>(sample_steps * strength);
     LOG_INFO("target t_enc is %zu steps", t_enc);
     std::vector<float> sigma_sched;
@@ -1624,7 +1626,7 @@ SD_API sd_image_t* img2vid(sd_ctx_t* sd_ctx,
 
     LOG_INFO("img2vid %dx%d", width, height);
 
-    std::vector<float> sigmas = sd_ctx->sd->denoiser->schedule->get_sigmas(sample_steps);
+    std::vector<float> sigmas = sd_ctx->sd->denoiser->scheduler->get_sigmas(sample_steps);
 
     struct ggml_init_params params;
     params.mem_size = static_cast<size_t>(10 * 1024) * 1024;  // 10 MB

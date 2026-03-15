@@ -42,15 +42,16 @@ enum sample_method_t {
     DPMPP2M,
     DPMPP2Mv2,
     LCM,
-    N_SAMPLE_METHODS
+    SAMPLE_METHOD_COUNT
 };
 
-enum schedule_t {
+enum scheduler_t {
     DEFAULT,
-    DISCRETE,
-    KARRAS,
-    AYS,
-    N_SCHEDULES
+    DISCRETE_SCHEDULER,
+    KARRAS_SCHEDULER,
+    LCM_SCHEDULER,
+    AYS_SCHEDULER,
+    SCHEDULER_COUNT
 };
 
 // same as enum ggml_type
@@ -125,7 +126,7 @@ SD_API sd_ctx_t* new_sd_ctx(const char* model_path,
                             int n_threads,
                             enum sd_type_t wtype,
                             enum rng_type_t rng_type,
-                            enum schedule_t s,
+                            enum scheduler_t s,
                             bool keep_clip_on_cpu,
                             bool keep_control_net_cpu,
                             bool keep_vae_on_cpu);

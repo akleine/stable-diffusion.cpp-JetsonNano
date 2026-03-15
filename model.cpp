@@ -1587,7 +1587,7 @@ bool ModelLoader::load_tensors(on_new_tensor_cb_t on_new_tensor_cb, ggml_backend
             if (partial) {
                 printf("\r");
             }
-            t1      = t2;
+            t1 = t2;
         }
 
         if (zip != NULL) {
