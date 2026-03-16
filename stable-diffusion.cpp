@@ -104,7 +104,7 @@ public:
 
     std::map<std::string, struct ggml_tensor*> tensors;
 
-    std::string lora_model_dir;
+    std::string lora_model_dir = ".";
     // lora_name => multiplier
     std::unordered_map<std::string, float> curr_lora_state;
 
@@ -879,6 +879,17 @@ public:
         struct ggml_tensor* noised_input = ggml_dup_tensor(work_ctx, x_t);
 
         bool has_unconditioned = cfg_scale != 1.0 && uc != NULL;
+
+        if (cfg_scale < 1.f) {
+            if (cfg_scale == 0.f) {
+                // Diffusers follow the convention from the original paper
+                // (https://arxiv.org/abs/2207.12598v1), so many distilled model docs
+                // recommend 0 as guidance; warn the user that it'll disable prompt folowing
+                LOG_WARN("unconditioned mode, images won't follow the prompt (use cfg-scale=1 for distilled models)");
+            } else {
+                LOG_WARN("cfg value out of expected range may produce unexpected results");
+            }
+        }
 
         if (noise == NULL) {
             // x = x * sigmas[0]
