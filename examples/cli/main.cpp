@@ -108,6 +108,7 @@ struct SDParams {
     bool normalize_input          = false;
     bool clip_on_cpu              = false;
     bool vae_on_cpu               = false;
+    bool enable_mmap              = false;
     bool canny_preprocess         = false;
     bool color                    = false;
     int upscale_repeats           = 1;
@@ -132,6 +133,7 @@ void print_params(SDParams params) {
     printf("    init_img:          %s\n", params.input_path.c_str());
     printf("    control_image:     %s\n", params.control_image_path.c_str());
     printf("    clip on cpu:       %s\n", params.clip_on_cpu ? "true" : "false");
+    printf("    enable_mmap:       %s\n", params.enable_mmap ? "true" : "false");
     printf("    controlnet cpu:    %s\n", params.control_net_cpu ? "true" : "false");
     printf("    vae decoder on cpu:%s\n", params.vae_on_cpu ? "true" : "false");
     printf("    strength(control): %.2f\n", params.control_strength);
@@ -408,6 +410,8 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 break;
             }
             params.clip_skip = std::stoi(argv[i]);
+        } else if (arg == "--mmap") {
+            params.enable_mmap = true;
         } else if (arg == "--vae-tiling") {
             params.vae_tiling = true;
         } else if (arg == "--control-net-cpu") {
@@ -753,7 +757,8 @@ int main(int argc, const char* argv[]) {
                                   params.scheduler,
                                   params.clip_on_cpu,
                                   params.control_net_cpu,
-                                  params.vae_on_cpu);
+                                  params.vae_on_cpu,
+                                  params.enable_mmap);
 
     if (sd_ctx == NULL) {
         printf("new_sd_ctx_t failed\n");

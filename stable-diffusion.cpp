@@ -154,7 +154,8 @@ public:
                         scheduler_t scheduler,
                         bool clip_on_cpu,
                         bool control_net_cpu,
-                        bool vae_on_cpu) {
+                        bool vae_on_cpu,
+                        bool enable_mmap) {
         use_tiny_autoencoder = taesd_path.size() > 0;
 #ifdef SD_USE_CUBLAS
         LOG_DEBUG("Using CUDA backend");
@@ -352,7 +353,7 @@ public:
         if (version == VERSION_SVD) {
             ignore_tensors.insert("conditioner.embedders.3");
         }
-        bool success = model_loader.load_tensors(tensors, backend, ignore_tensors);
+        bool success = model_loader.load_tensors(tensors, backend, ignore_tensors, enable_mmap);
         if (!success) {
             LOG_ERROR("load tensors from model loader failed");
             ggml_free(ctx);
@@ -372,7 +373,7 @@ public:
             if (!use_tiny_autoencoder && version != VERSION_SDXS && version != VERSION_SDXS_09) {
                 vae_params_mem_size = first_stage_model->get_params_buffer_size();
             } else {
-                if (use_tiny_autoencoder && !tae_first_stage->load_from_file(taesd_path)) {
+                if (use_tiny_autoencoder && !tae_first_stage->load_from_file(taesd_path, enable_mmap)) {
                     return false;
                 }
                 use_tiny_autoencoder = true;  // now the processing is identical for VERSION_SDXS/-09
@@ -1140,7 +1141,8 @@ sd_ctx_t* new_sd_ctx(const char* model_path_c_str,
                      enum scheduler_t s,
                      bool keep_clip_on_cpu,
                      bool keep_control_net_cpu,
-                     bool keep_vae_on_cpu) {
+                     bool keep_vae_on_cpu,
+                     bool enable_mmap) {
     sd_ctx_t* sd_ctx = (sd_ctx_t*)malloc(sizeof(sd_ctx_t));
     if (sd_ctx == NULL) {
         return NULL;
@@ -1173,7 +1175,8 @@ sd_ctx_t* new_sd_ctx(const char* model_path_c_str,
                                     s,
                                     keep_clip_on_cpu,
                                     keep_control_net_cpu,
-                                    keep_vae_on_cpu)) {
+                                    keep_vae_on_cpu,
+                                    enable_mmap)) {
         delete sd_ctx->sd;
         sd_ctx->sd = NULL;
         free(sd_ctx);

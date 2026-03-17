@@ -1443,7 +1443,7 @@ std::vector<TensorStorage> remove_duplicates(const std::vector<TensorStorage>& v
     return res;
 }
 
-bool ModelLoader::load_tensors(on_new_tensor_cb_t on_new_tensor_cb, ggml_backend_t backend) {
+bool ModelLoader::load_tensors(on_new_tensor_cb_t on_new_tensor_cb, ggml_backend_t backend, bool enable_mmap) {
     std::vector<TensorStorage> processed_tensor_storages;
     for (auto& tensor_storage : tensor_storages) {
         // LOG_DEBUG("%s", name.c_str());
@@ -1479,6 +1479,14 @@ bool ModelLoader::load_tensors(on_new_tensor_cb_t on_new_tensor_cb, ggml_backend
             }
         }
 
+        std::unique_ptr<MmapWrapper> mmapped;
+        if (enable_mmap && !is_zip) {
+            LOG_DEBUG("using mmap for I/O");
+            mmapped = MmapWrapper::create(file_path);
+            if (!mmapped) {
+                LOG_WARN("failed to memory-map '%s'", file_path.c_str());
+            }
+        }
         struct zip_t* zip = NULL;
         if (is_zip) {
             zip = zip_open(file_path.c_str(), 0, 'r');
@@ -1503,6 +1511,11 @@ bool ModelLoader::load_tensors(on_new_tensor_cb_t on_new_tensor_cb, ggml_backend
                     zip_entry_noallocread(zip, (void*)buf, n);
                 }
                 zip_entry_close(zip);
+            } else if (mmapped) {
+                if (!mmapped->copy_data(buf, n, tensor_storage.offset)) {
+                    LOG_ERROR("read tensor data failed: '%s'", file_path.c_str());
+                    return false;
+                }
             } else {
                 file.seekg(tensor_storage.offset);
                 file.read(buf, n);
@@ -1607,7 +1620,8 @@ bool ModelLoader::load_tensors(on_new_tensor_cb_t on_new_tensor_cb, ggml_backend
 
 bool ModelLoader::load_tensors(std::map<std::string, struct ggml_tensor*>& tensors,
                                ggml_backend_t backend,
-                               std::set<std::string> ignore_tensors) {
+                               std::set<std::string> ignore_tensors,
+                               bool enable_mmap) {
     std::set<std::string> tensor_names_in_file;
     auto on_new_tensor_cb = [&](const TensorStorage& tensor_storage, ggml_tensor** dst_tensor) -> bool {
         const std::string& name = tensor_storage.name;
@@ -1646,7 +1660,7 @@ bool ModelLoader::load_tensors(std::map<std::string, struct ggml_tensor*>& tenso
         return true;
     };
 
-    bool success = load_tensors(on_new_tensor_cb, backend);
+    bool success = load_tensors(on_new_tensor_cb, backend, enable_mmap);
     if (!success) {
         LOG_ERROR("load tensors from file failed");
         return false;
