@@ -101,6 +101,7 @@ public:
     bool use_tiny_autoencoder = false;
     bool vae_tiling           = false;
     bool stacked_id           = false;
+    bool enable_mmap          = false;
 
     std::map<std::string, struct ggml_tensor*> tensors;
 
@@ -116,11 +117,13 @@ public:
 
     StableDiffusionGGML(int n_threads,
                         bool vae_decode_only,
+                        bool enable_mmap,
                         bool free_params_immediately,
                         std::string lora_model_dir,
                         rng_type_t rng_type)
         : n_threads(n_threads),
           vae_decode_only(vae_decode_only),
+          enable_mmap(enable_mmap),
           free_params_immediately(free_params_immediately),
           lora_model_dir(lora_model_dir) {
         if (rng_type == STD_DEFAULT_RNG) {
@@ -155,7 +158,7 @@ public:
                         bool clip_on_cpu,
                         bool control_net_cpu,
                         bool vae_on_cpu,
-                        bool enable_mmap) {
+                        bool enable_mmap_) {
         use_tiny_autoencoder = taesd_path.size() > 0;
 #ifdef SD_USE_CUBLAS
         LOG_DEBUG("Using CUDA backend");
@@ -181,7 +184,8 @@ public:
         LOG_INFO("loading model from '%s'", model_path.c_str());
         ModelLoader model_loader;
 
-        vae_tiling = vae_tiling_;
+        vae_tiling  = vae_tiling_;
+        enable_mmap = enable_mmap_;
 
         if (!model_loader.init_from_file(model_path)) {
             LOG_ERROR("init model loader from file failed: '%s'", model_path.c_str());
@@ -526,7 +530,7 @@ public:
         return result < -1;
     }
 
-    void apply_lora(const std::string& lora_name, float multiplier) {
+    void apply_lora(const std::string& lora_name, float multiplier, bool enable_mmap) {
         int64_t t0                 = ggml_time_ms();
         std::string st_file_path   = path_join(lora_model_dir, lora_name + ".safetensors");
         std::string ckpt_file_path = path_join(lora_model_dir, lora_name + ".ckpt");
@@ -540,6 +544,7 @@ public:
             return;
         }
         LoraModel lora(backend, model_data_type, file_path);
+        lora.set_mmap(enable_mmap);
         if (!lora.load_from_file()) {
             LOG_WARN("load lora tensors from %s failed", file_path.c_str());
             return;
@@ -554,7 +559,7 @@ public:
         LOG_INFO("lora '%s' applied, taking %.2fs", lora_name.c_str(), (t1 - t0) * 1.0f / 1000);
     }
 
-    void apply_loras(const std::unordered_map<std::string, float>& lora_state) {
+    void apply_loras(const std::unordered_map<std::string, float>& lora_state, bool enable_mmap) {
         if (lora_state.size() > 0 && model_data_type != GGML_TYPE_F16 && model_data_type != GGML_TYPE_F32) {
             LOG_WARN("In quantized models when applying LoRA, the images have poor quality.");
         }
@@ -577,7 +582,7 @@ public:
         LOG_INFO("Attempting to apply %lu LoRAs", lora_state.size());
 
         for (auto& kv : lora_state_diff) {
-            apply_lora(kv.first, kv.second);
+            apply_lora(kv.first, kv.second, enable_mmap);
         }
 
         curr_lora_state = lora_state;
@@ -1157,6 +1162,7 @@ sd_ctx_t* new_sd_ctx(const char* model_path_c_str,
 
     sd_ctx->sd = new StableDiffusionGGML(n_threads,
                                          vae_decode_only,
+                                         enable_mmap,
                                          free_params_immediately,
                                          lora_model_dir,
                                          rng_type);
@@ -1233,7 +1239,7 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
     LOG_DEBUG("prompt after extract and remove lora: \"%s\"", prompt.c_str());
 
     int64_t t0 = ggml_time_ms();
-    sd_ctx->sd->apply_loras(lora_f2m);
+    sd_ctx->sd->apply_loras(lora_f2m, sd_ctx->sd->enable_mmap);
     int64_t t1 = ggml_time_ms();
     LOG_INFO("apply_loras completed, taking %.2fs", (t1 - t0) * 1.0f / 1000);
 

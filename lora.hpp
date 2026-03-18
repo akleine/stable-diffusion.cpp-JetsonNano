@@ -12,6 +12,7 @@ struct LoraModel : public GGMLModule {
     ModelLoader model_loader;
     bool load_failed = false;
     bool applied     = false;
+    bool enable_mmap;
 
     LoraModel(ggml_backend_t backend,
               ggml_type wtype,
@@ -25,6 +26,10 @@ struct LoraModel : public GGMLModule {
 
     std::string get_desc() {
         return "lora";
+    }
+
+    void set_mmap(bool enable_mmap_) {
+        enable_mmap = enable_mmap_;
     }
 
     bool load_from_file(bool filter_tensor = false) {
@@ -58,11 +63,11 @@ struct LoraModel : public GGMLModule {
             return true;
         };
 
-        model_loader.load_tensors(on_new_tensor_cb, backend);
+        model_loader.load_tensors(on_new_tensor_cb, backend, enable_mmap);
         alloc_params_buffer();
 
         dry_run = false;
-        model_loader.load_tensors(on_new_tensor_cb, backend);
+        model_loader.load_tensors(on_new_tensor_cb, backend, enable_mmap);
 
         LOG_DEBUG("finished loaded lora");
         return true;
