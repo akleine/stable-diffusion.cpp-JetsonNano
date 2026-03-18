@@ -532,15 +532,18 @@ public:
 
     void apply_lora(const std::string& lora_name, float multiplier, bool enable_mmap) {
         int64_t t0                 = ggml_time_ms();
+        std::string gguf_file_path = path_join(lora_model_dir, lora_name + ".gguf");
         std::string st_file_path   = path_join(lora_model_dir, lora_name + ".safetensors");
         std::string ckpt_file_path = path_join(lora_model_dir, lora_name + ".ckpt");
         std::string file_path;
-        if (file_exists(st_file_path)) {
+        if (file_exists(gguf_file_path)) {
+            file_path = gguf_file_path;
+        } else if (file_exists(st_file_path)) {
             file_path = st_file_path;
         } else if (file_exists(ckpt_file_path)) {
             file_path = ckpt_file_path;
         } else {
-            LOG_WARN("can not find %s or %s for lora %s", st_file_path.c_str(), ckpt_file_path.c_str(), lora_name.c_str());
+            LOG_WARN("can not find %s, %s or %s for lora %s", gguf_file_path.c_str(), st_file_path.c_str(), ckpt_file_path.c_str(), lora_name.c_str());
             return;
         }
         LoraModel lora(backend, model_data_type, file_path);

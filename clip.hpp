@@ -1112,12 +1112,12 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
             size_t word_end       = str.find(",");
             std::string embd_name = word_end == std::string::npos ? str : str.substr(0, word_end);
             embd_name             = trim(embd_name);
-            std::string embd_path = get_full_path(embd_dir, embd_name + ".pt");
-            if (embd_path.size() == 0) {
-                embd_path = get_full_path(embd_dir, embd_name + ".ckpt");
-            }
+            std::string embd_path = get_full_path(embd_dir, embd_name + ".gguf");
             if (embd_path.size() == 0) {
                 embd_path = get_full_path(embd_dir, embd_name + ".safetensors");
+            }
+            if (embd_path.size() == 0) {
+                embd_path = get_full_path(embd_dir, embd_name + ".pt");
             }
             if (embd_path.size() > 0) {
                 if (load_embedding(embd_name, embd_path, bpe_tokens)) {

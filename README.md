@@ -12,9 +12,7 @@ Read more notes about stable-diffusion.cpp below in leejet's original README.
 
 Later sd.cpp (https://github.com/leejet/stable-diffusion.cpp) commits require a more up-to-date NVCC compiler, CUDA Toolkit 11+, and improved GPU capabilities, which the Jetson's NVIDIA Tegra X1 lacks. The highest CUDA version supported on the Jetson Nano is 10.2. This fork is based on leejet's commit #e1384de (https://github.com/leejet/stable-diffusion.cpp/commit/e1384de), the last in a long series of usable commits. It can be easily compiled using CUBLAS out of the box on the Jetson Nano, no patches are needed. Many thanks for this excellent work! For detailed compilation instructions, see section ```Using CUBLAS``` below in leejet's [README](#original-README) .
 
-**Many commits from the newer sd.cpp versions have been backported to this particular fork.**
-
-Most of these concern the operation of SD1/2.x models and some tiny derivatives. Due to the limited shared RAM in the Jetson Nano, the backporting of the inpainting feature and of more advanced models (SD3, Z-Image etc.) was not done.
+**Many commits from the newer sd.cpp versions have been backported to this particular fork.**  Most of these commits concern the operation of SD1/2.x models and some tiny derivatives. Due to the limited shared RAM in the Jetson Nano, the backporting of the inpainting feature and of more advanced models (SD3, Z-Image etc.) was not done.
 
 ## Running sd on the Jetson Nano
 
