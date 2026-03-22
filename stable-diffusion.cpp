@@ -473,14 +473,41 @@ public:
                     LOG_INFO("running with Karras scheduler");
                     denoiser->scheduler = std::make_shared<KarrasScheduler>();
                     break;
+                case EXPONENTIAL_SCHEDULER:
+                    LOG_INFO("running exponential schedule");
+                    denoiser->scheduler = std::make_shared<ExponentialScheduler>();
+                    break;
+                case AYS_SCHEDULER:
+                    LOG_INFO("Running with Align-Your-Steps scheduler");
+                    denoiser->scheduler          = std::make_shared<AYSScheduler>();
+                    denoiser->scheduler->version = version;
+                    break;
+                case GITS_SCHEDULER:
+                    LOG_INFO("Running with GITS scheduler");
+                    denoiser->scheduler          = std::make_shared<GITSScheduler>();
+                    denoiser->scheduler->version = version;
+                    break;
+                case SGM_UNIFORM_SCHEDULER:
+                    LOG_INFO("Running with SGM Uniform scheduler");
+                    denoiser->scheduler          = std::make_shared<SGMUniformScheduler>();
+                    denoiser->scheduler->version = version;
+                    break;
+                case SIMPLE_SCHEDULER:
+                    LOG_INFO("Running with Simple scheduler");
+                    denoiser->scheduler          = std::make_shared<SimpleScheduler>();
+                    denoiser->scheduler->version = version;
+                    break;
+                case SMOOTHSTEP_SCHEDULER:
+                    LOG_INFO("Running with SmoothStep scheduler");
+                    denoiser->scheduler = std::make_shared<SmoothStepScheduler>();
+                    break;
+                case KL_OPTIMAL_SCHEDULER:
+                    LOG_INFO("Running with KLOptimal scheduler");
+                    denoiser->scheduler = std::make_shared<KLOptimalScheduler>();
+                    break;
                 case LCM_SCHEDULER:
                     LOG_INFO("running with LCM scheduler");
                     denoiser->scheduler = std::make_shared<LCMScheduler>();
-                    break;
-                case AYS_SCHEDULER:
-                    LOG_INFO("Running with Align-Your-Steps schedulerr");
-                    denoiser->scheduler          = std::make_shared<AYSScheduler>();
-                    denoiser->scheduler->version = version;
                     break;
                 case DEFAULT:
                     // Don't touch anything.
@@ -491,10 +518,12 @@ public:
             }
         }
 
-        for (int i = 0; i < TIMESTEPS; i++) {
-            denoiser->scheduler->alphas_cumprod[i] = ((float*)alphas_cumprod_tensor->data)[i];
-            denoiser->scheduler->sigmas[i]         = std::sqrt((1 - denoiser->scheduler->alphas_cumprod[i]) / denoiser->scheduler->alphas_cumprod[i]);
-            denoiser->scheduler->log_sigmas[i]     = std::log(denoiser->scheduler->sigmas[i]);
+        auto comp_vis_denoiser = std::dynamic_pointer_cast<CompVisDenoiser>(denoiser);
+        if (comp_vis_denoiser) {
+            for (int i = 0; i < TIMESTEPS; i++) {
+                comp_vis_denoiser->sigmas[i]     = std::sqrt((1 - ((float*)alphas_cumprod_tensor->data)[i]) / ((float*)alphas_cumprod_tensor->data)[i]);
+                comp_vis_denoiser->log_sigmas[i] = std::log(comp_vis_denoiser->sigmas[i]);
+            }
         }
 
         LOG_DEBUG("finished loaded file");
@@ -940,7 +969,7 @@ public:
                 c_in  = scaling[1];
             }
 
-            float t = denoiser->scheduler->sigma_to_t(sigma);
+            float t = denoiser->sigma_to_t(sigma);
             std::vector<float> timesteps_vec(x->ne[3], t);  // [N, ]
             auto timesteps = vector_to_ggml_tensor(work_ctx, timesteps_vec);
 
@@ -1510,7 +1539,7 @@ sd_image_t* txt2img(sd_ctx_t* sd_ctx,
 
     size_t t0 = ggml_time_ms();
 
-    std::vector<float> sigmas = sd_ctx->sd->denoiser->scheduler->get_sigmas(sample_steps);
+    std::vector<float> sigmas = sd_ctx->sd->denoiser->get_sigmas(sample_steps);
 
     sd_image_t* result_images = generate_image(sd_ctx,
                                                work_ctx,
@@ -1599,7 +1628,7 @@ sd_image_t* img2img(sd_ctx_t* sd_ctx,
     size_t t1 = ggml_time_ms();
     LOG_INFO("encode_first_stage completed, taking %.2fs", (t1 - t0) * 1.0f / 1000);
 
-    std::vector<float> sigmas = sd_ctx->sd->denoiser->scheduler->get_sigmas(sample_steps);
+    std::vector<float> sigmas = sd_ctx->sd->denoiser->get_sigmas(sample_steps);
     size_t t_enc              = static_cast<size_t>(sample_steps * strength);
     LOG_INFO("target t_enc is %zu steps", t_enc);
     std::vector<float> sigma_sched;
@@ -1651,7 +1680,7 @@ SD_API sd_image_t* img2vid(sd_ctx_t* sd_ctx,
 
     LOG_INFO("img2vid %dx%d", width, height);
 
-    std::vector<float> sigmas = sd_ctx->sd->denoiser->scheduler->get_sigmas(sample_steps);
+    std::vector<float> sigmas = sd_ctx->sd->denoiser->get_sigmas(sample_steps);
 
     struct ggml_init_params params;
     params.mem_size = static_cast<size_t>(10 * 1024) * 1024;  // 10 MB

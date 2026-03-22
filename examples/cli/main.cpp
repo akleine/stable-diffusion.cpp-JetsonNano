@@ -46,8 +46,14 @@ const char* scheduler_str[] = {
     "default",
     "discrete",
     "karras",
-    "lcm",
+    "exponential",
     "ays",
+    "gits",
+    "sgm_uniform",
+    "simple",
+    "smoothstep",
+    "kl_optimal",
+    "lcm",
 };
 
 const char* modes_str[] = {
@@ -201,7 +207,7 @@ void print_usage(int argc, const char* argv[]) {
     printf("  --rng {std_default, cuda}          RNG (default: cuda)\n");
     printf("  -s SEED, --seed SEED               RNG seed (default: 42, use random seed for < 0)\n");
     printf("  -b, --batch-count COUNT            number of images to generate.\n");
-    printf("  --scheduler {discrete, karras, ays, lcm}\n");
+    printf("  --scheduler {discrete, karras, exponential, ays, gits, sgm_uniform, simple, smoothstep, kl_optimal, lcm}\n");
     printf("                                     Denoiser sigma scheduler (default: discrete)\n");
     printf("  --clip-skip N                      ignore last layers of CLIP network; 1 ignores none, 2 ignores one layer (default: -1)\n");
     printf("                                     <= 0 represents unspecified, will be 1 for SD1.x, 2 for SD2.x\n");
