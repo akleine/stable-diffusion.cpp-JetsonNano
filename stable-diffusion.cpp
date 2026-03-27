@@ -2,6 +2,7 @@
 
 #include "model.h"
 #include "rng.hpp"
+#include "rng_mt19937.hpp"
 #include "rng_philox.hpp"
 #include "stable-diffusion.h"
 #include "util.h"
@@ -132,6 +133,8 @@ public:
             rng = std::make_shared<STDDefaultRNG>();
         } else if (rng_type == CUDA_RNG) {
             rng = std::make_shared<PhiloxRNG>();
+        } else if (rng_type == CPU_RNG) {
+            rng = std::make_shared<MT19937RNG>();
         }
     }
 

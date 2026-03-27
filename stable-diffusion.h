@@ -30,7 +30,8 @@ extern "C" {
 
 enum rng_type_t {
     STD_DEFAULT_RNG,
-    CUDA_RNG
+    CUDA_RNG,
+    CPU_RNG,
 };
 
 enum sample_method_t {

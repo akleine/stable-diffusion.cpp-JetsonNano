@@ -25,6 +25,7 @@
 const char* rng_type_to_str[] = {
     "std_default",
     "cuda",
+    "cpu",
 };
 
 // Names of the sampler method, same order as enum sample_method in stable-diffusion.h
@@ -204,7 +205,7 @@ void print_usage(int argc, const char* argv[]) {
     printf("  --sampling-method {euler, euler_a, heun, dpm2, dpm++2s_a, dpm++2m, dpm++2mv2, ipndm, ipndm_v, lcm}\n");
     printf("                                     sampling method (default: \"euler_a\")\n");
     printf("  --steps  STEPS                     number of sample steps (default: 20)\n");
-    printf("  --rng {std_default, cuda}          RNG (default: cuda)\n");
+    printf("  --rng {std_default, cuda, cpu}     RNG (default: cuda)\n");
     printf("  -s SEED, --seed SEED               RNG seed (default: 42, use random seed for < 0)\n");
     printf("  -b, --batch-count COUNT            number of images to generate.\n");
     printf("  --scheduler {discrete, karras, exponential, ays, gits, sgm_uniform, simple, smoothstep, kl_optimal, lcm}\n");
@@ -450,6 +451,8 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 params.rng_type = STD_DEFAULT_RNG;
             } else if (rng_type_str == "cuda") {
                 params.rng_type = CUDA_RNG;
+            } else if (rng_type_str == "cpu") {
+                params.rng_type = CPU_RNG;
             } else {
                 invalid_arg = true;
                 break;
