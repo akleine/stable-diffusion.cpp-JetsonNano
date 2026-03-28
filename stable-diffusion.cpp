@@ -54,6 +54,8 @@ const char* sampling_methods_str[] = {
     "iPNDM",
     "iPNDM_v",
     "LCM",
+    "DDIM \"trailing\"",
+    "TCD",
 };
 
 /*================================================== Helper Functions ================================================*/
@@ -912,7 +914,8 @@ public:
                         const std::vector<float>& sigmas,
                         int start_merge_step,
                         ggml_tensor* c_id,
-                        ggml_tensor* c_vec_id) {
+                        ggml_tensor* c_vec_id,
+                        float eta) {
         size_t steps = sigmas.size() - 1;
         // x_t = load_tensor_from_file(work_ctx, "./rand0.bin");
         // print_ggml_tensor(x_t);
@@ -1060,8 +1063,7 @@ public:
             }
             return denoised;
         };
-
-        sample_k_diffusion(method, denoise, work_ctx, x, sigmas, rng);
+        sample_k_diffusion(method, denoise, work_ctx, x, sigmas, rng, eta);
 
         if (control_net) {
             control_net->free_control_ctx();
@@ -1253,7 +1255,8 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
                            float control_strength,
                            float style_ratio,
                            bool normalize_input,
-                           std::string input_id_images_path) {
+                           std::string input_id_images_path,
+                           float eta) {
     if (seed < 0) {
         // Generally, when using the provided command line, the seed is always >0.
         // However, to prevent potential issues if 'stable-diffusion.cpp' is invoked as a library
@@ -1452,7 +1455,8 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
                                                      sigmas,
                                                      start_merge_step,
                                                      prompts_embeds,
-                                                     pooled_prompts_embeds);
+                                                     pooled_prompts_embeds,
+                                                     eta);
         // struct ggml_tensor* x_0 = load_tensor_from_file(ctx, "samples_ddim.bin");
         // print_ggml_tensor(x_0);
         int64_t sampling_end = ggml_time_ms();
@@ -1517,7 +1521,8 @@ sd_image_t* txt2img(sd_ctx_t* sd_ctx,
                     float control_strength,
                     float style_ratio,
                     bool normalize_input,
-                    const char* input_id_images_path_c_str) {
+                    const char* input_id_images_path_c_str,
+                    float eta) {
     LOG_DEBUG("txt2img %dx%d", width, height);
     if (sd_ctx == NULL) {
         return NULL;
@@ -1561,7 +1566,8 @@ sd_image_t* txt2img(sd_ctx_t* sd_ctx,
                                                control_strength,
                                                style_ratio,
                                                normalize_input,
-                                               input_id_images_path_c_str);
+                                               input_id_images_path_c_str,
+                                               eta);
 
     size_t t1 = ggml_time_ms();
 
@@ -1587,7 +1593,8 @@ sd_image_t* img2img(sd_ctx_t* sd_ctx,
                     float control_strength,
                     float style_ratio,
                     bool normalize_input,
-                    const char* input_id_images_path_c_str) {
+                    const char* input_id_images_path_c_str,
+                    float eta) {
     LOG_DEBUG("img2img %dx%d", width, height);
     if (sd_ctx == NULL) {
         return NULL;
@@ -1654,7 +1661,8 @@ sd_image_t* img2img(sd_ctx_t* sd_ctx,
                                                control_strength,
                                                style_ratio,
                                                normalize_input,
-                                               input_id_images_path_c_str);
+                                               input_id_images_path_c_str,
+                                               eta);
 
     size_t t2 = ggml_time_ms();
 
@@ -1762,7 +1770,8 @@ SD_API sd_image_t* img2vid(sd_ctx_t* sd_ctx,
                                                  sigmas,
                                                  -1,
                                                  NULL,
-                                                 NULL);
+                                                 NULL,
+                                                 0.f);
 
     int64_t t2 = ggml_time_ms();
     LOG_INFO("sampling completed, taking %.2fs", (t2 - t1) * 1.0f / 1000);

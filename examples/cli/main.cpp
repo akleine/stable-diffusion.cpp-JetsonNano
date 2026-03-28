@@ -40,6 +40,8 @@ const char* sample_method_str[] = {
     "ipndm",
     "ipndm_v",
     "lcm",
+    "ddim_trailing",
+    "tcd",
 };
 
 // Names of the sigma scheduler overrides, same order as sample_schedule in stable-diffusion.h
@@ -94,6 +96,7 @@ struct SDParams {
     std::string negative_prompt;
     float min_cfg     = 1.0f;
     float cfg_scale   = 7.0f;
+    float eta         = 0.f;
     float style_ratio = 20.f;
     int clip_skip     = -1;  // <= 0 represents unspecified
     int width         = 512;
@@ -151,6 +154,7 @@ void print_params(SDParams params) {
     printf("    negative_prompt:   %s\n", params.negative_prompt.c_str());
     printf("    min_cfg:           %.2f\n", params.min_cfg);
     printf("    cfg_scale:         %.2f\n", params.cfg_scale);
+    printf("    eta:               %.2f\n", params.eta);
     printf("    clip_skip:         %d\n", params.clip_skip);
     printf("    width:             %d\n", params.width);
     printf("    height:            %d\n", params.height);
@@ -197,12 +201,13 @@ void print_usage(int argc, const char* argv[]) {
     printf("  -n, --negative-prompt PROMPT       the negative prompt (default: \"\")\n");
     printf("  --cfg-scale SCALE                  unconditional guidance scale: (default: 7.0)\n");
     printf("  --strength STRENGTH                strength for noising/unnoising (default: 0.75)\n");
+    printf("  --eta SCALE                        eta in DDIM, only for DDIM and TCD: (default: 0)\n");
     printf("  --style-ratio STYLE-RATIO          strength for keeping input identity (default: 20%%)\n");
     printf("  --control-strength STRENGTH        strength to apply Control Net (default: 0.9)\n");
     printf("                                     1.0 corresponds to full destruction of information in init image\n");
     printf("  -H, --height H                     image height, in pixel space (default: 512)\n");
     printf("  -W, --width W                      image width, in pixel space (default: 512)\n");
-    printf("  --sampling-method {euler, euler_a, heun, dpm2, dpm++2s_a, dpm++2m, dpm++2mv2, ipndm, ipndm_v, lcm}\n");
+    printf("  --sampling-method {euler, euler_a, heun, dpm2, dpm++2s_a, dpm++2m, dpm++2mv2, ipndm, ipndm_v, lcm, ddim_trailing, tcd}\n");
     printf("                                     sampling method (default: \"euler_a\")\n");
     printf("  --steps  STEPS                     number of sample steps (default: 20)\n");
     printf("  --rng {std_default, cuda, cpu}     RNG (default: cuda)\n");
@@ -397,6 +402,12 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 break;
             }
             params.control_strength = std::stof(argv[i]);
+        } else if (arg == "--eta") {
+            if (++i >= argc) {
+                invalid_arg = true;
+                break;
+            }
+            params.eta = std::stof(argv[i]);
         } else if (arg == "-H" || arg == "--height") {
             if (++i >= argc) {
                 invalid_arg = true;
@@ -594,6 +605,7 @@ std::string get_image_params(SDParams params, int64_t seed) {
     }
     parameter_string += "Steps: " + std::to_string(params.sample_steps) + ", ";
     parameter_string += "CFG scale: " + std::to_string(params.cfg_scale) + ", ";
+    parameter_string += "Eta: " + std::to_string(params.eta) + ", ";
     parameter_string += "Seed: " + std::to_string(seed) + ", ";
     parameter_string += "Size: " + std::to_string(params.width) + "x" + std::to_string(params.height) + ", ";
     parameter_string += "Model: " + sd_basename(params.model_path) + ", ";
@@ -819,7 +831,8 @@ int main(int argc, const char* argv[]) {
                           params.control_strength,
                           params.style_ratio,
                           params.normalize_input,
-                          params.input_id_images_path.c_str());
+                          params.input_id_images_path.c_str(),
+                          params.eta);
     } else {
         sd_image_t input_image = {(uint32_t)params.width,
                                   (uint32_t)params.height,
@@ -880,7 +893,8 @@ int main(int argc, const char* argv[]) {
                               params.control_strength,
                               params.style_ratio,
                               params.normalize_input,
-                              params.input_id_images_path.c_str());
+                              params.input_id_images_path.c_str(),
+                              params.eta);
         }
     }
 
