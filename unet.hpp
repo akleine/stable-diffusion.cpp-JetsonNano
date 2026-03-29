@@ -8,7 +8,7 @@
 /*==================================================== UnetModel =====================================================*/
 
 #define UNET_GRAPH_SIZE 10240
-
+#ifdef IMAGE_INPUT_OR_VID
 class SpatialVideoTransformer : public SpatialTransformer {
 protected:
     int64_t time_depth;
@@ -162,6 +162,7 @@ public:
         return x;
     }
 };
+#endif
 
 // ldm.modules.diffusionmodules.openaimodel.UNetModel
 class UnetModelBlock : public GGMLBlock {
@@ -253,9 +254,12 @@ public:
                                        int64_t d_head,
                                        int64_t depth,
                                        int64_t context_dim) -> SpatialTransformer* {
+#ifdef IMAGE_INPUT_OR_VID
             if (version == VERSION_SVD) {
                 return new SpatialVideoTransformer(in_channels, n_head, d_head, depth, context_dim);
-            } else {
+            } else
+#endif
+            {
                 if (version == VERSION_SDXS_09 && n_head == 5) {
                     n_head = 1;    // to carry a special case of sdxs_09 into CrossAttentionLayer,
                     d_head = 320;  // works as long the product remains equal (5*64 == 1*320)
@@ -404,11 +408,14 @@ public:
                                                 struct ggml_tensor* x,
                                                 struct ggml_tensor* context,
                                                 int timesteps) {
+#ifdef IMAGE_INPUT_OR_VID
         if (version == VERSION_SVD) {
             auto block = std::dynamic_pointer_cast<SpatialVideoTransformer>(blocks[name]);
 
             return block->forward(ctx, x, context, timesteps);
-        } else {
+        } else
+#endif
+        {
             auto block = std::dynamic_pointer_cast<SpatialTransformer>(blocks[name]);
 
             return block->forward(ctx, x, context);

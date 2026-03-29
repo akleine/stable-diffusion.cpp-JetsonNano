@@ -97,7 +97,7 @@ std::string get_full_path(const std::string& dir, const std::string& filename) {
         return "";
     }
 }
-
+#ifdef IMAGE_INPUT_OR_VID
 std::vector<std::string> get_files_from_dir(const std::string& dir) {
     std::vector<std::string> files;
 
@@ -134,7 +134,7 @@ std::vector<std::string> get_files_from_dir(const std::string& dir) {
 
     return files;
 }
-
+#endif
 // Windows code copied from https://github.com/leejet/stable-diffusion.cpp/pull/1059/changes
 // but NOT TESTED, because this util.cpp is intended for the Jetson Nano running *Linux*
 // akleine, Mar 2026
@@ -203,7 +203,7 @@ bool is_directory(const std::string& path) {
     return (stat(path.c_str(), &buffer) == 0 && S_ISDIR(buffer.st_mode));
 }
 
-// TODO: add windows version
+
 std::string get_full_path(const std::string& dir, const std::string& filename) {
     DIR* dp = opendir(dir.c_str());
 
@@ -223,6 +223,7 @@ std::string get_full_path(const std::string& dir, const std::string& filename) {
     return "";
 }
 
+#ifdef IMAGE_INPUT_OR_VID
 std::vector<std::string> get_files_from_dir(const std::string& dir) {
     std::vector<std::string> files;
 
@@ -243,6 +244,7 @@ std::vector<std::string> get_files_from_dir(const std::string& dir) {
 
     return files;
 }
+#endif
 
 class MmapWrapperImpl : public MmapWrapper {
 public:

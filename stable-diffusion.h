@@ -162,7 +162,7 @@ SD_API sd_image_t* txt2img(sd_ctx_t* sd_ctx,
                            bool normalize_input,
                            const char* input_id_images_path,
                            float eta);
-
+#ifdef IMAGE_INPUT_OR_VID
 SD_API sd_image_t* img2img(sd_ctx_t* sd_ctx,
                            sd_image_t init_image,
                            const char* prompt,
@@ -197,7 +197,7 @@ SD_API sd_image_t* img2vid(sd_ctx_t* sd_ctx,
                            int sample_steps,
                            float strength,
                            int64_t seed);
-
+#endif
 typedef struct upscaler_ctx_t upscaler_ctx_t;
 
 SD_API upscaler_ctx_t* new_upscaler_ctx(const char* esrgan_path,
@@ -208,7 +208,7 @@ SD_API void free_upscaler_ctx(upscaler_ctx_t* upscaler_ctx);
 SD_API sd_image_t upscale(upscaler_ctx_t* upscaler_ctx, sd_image_t input_image, uint32_t upscale_factor);
 
 SD_API bool convert(const char* input_path, const char* vae_path, const char* output_path, sd_type_t output_type);
-
+#ifdef IMAGE_INPUT_OR_VID
 SD_API uint8_t* preprocess_canny(uint8_t* img,
                                  int width,
                                  int height,
@@ -217,7 +217,7 @@ SD_API uint8_t* preprocess_canny(uint8_t* img,
                                  float weak,
                                  float strong,
                                  bool inverse);
-
+#endif
 SD_API const char* sd_commit(void);
 SD_API const char* sd_version(void);
 

@@ -1324,10 +1324,11 @@ SDVersion ModelLoader::get_sd_version() {
         if (tensor_storage.name.find("cond_stage_model.1") != std::string::npos) {
             is_xl = true;
         }
+#ifdef IMAGE_INPUT_OR_VID
         if (tensor_storage.name.find("model.diffusion_model.input_blocks.8.0.time_mixer.mix_factor") != std::string::npos) {
             return VERSION_SVD;
         }
-
+#endif
         if (tensor_storage.name.find("model.diffusion_model.middle_block.1.") != std::string::npos ||
             tensor_storage.name.find("unet.mid_block.resnets.1.") != std::string::npos) {
             has_middle_block_1 = true;

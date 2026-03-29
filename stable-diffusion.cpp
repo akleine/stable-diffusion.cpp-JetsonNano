@@ -17,9 +17,11 @@
 #include "unet.hpp"
 #include "vae.hpp"
 
+#ifdef IMAGE_INPUT_OR_VID
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_STATIC
 #include "stb_image.h"
+#endif
 
 // #define STB_IMAGE_WRITE_IMPLEMENTATION
 // #define STB_IMAGE_WRITE_STATIC
@@ -231,7 +233,7 @@ public:
                     "You can find it here: https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/blob/main/sdxl_vae.safetensors");
             }
         }
-
+#ifdef IMAGE_INPUT_OR_VID
         if (version == VERSION_SVD) {
             clip_vision = std::make_shared<FrozenCLIPVisionEmbedder>(backend, model_data_type);
             clip_vision->alloc_params_buffer();
@@ -245,7 +247,9 @@ public:
             LOG_DEBUG("vae_decode_only %d", vae_decode_only);
             first_stage_model->alloc_params_buffer();
             first_stage_model->get_param_tensors(tensors, "first_stage_model");
-        } else {
+        } else
+#endif
+        {
             clip_backend = backend;
             if (clip_on_cpu && !ggml_backend_is_cpu(backend)) {
                 LOG_INFO("CLIP: Using CPU backend");
@@ -361,9 +365,11 @@ public:
             ignore_tensors.insert("first_stage_model.encoder");
             ignore_tensors.insert("first_stage_model.quant");
         }
+#ifdef IMAGE_INPUT_OR_VID
         if (version == VERSION_SVD) {
             ignore_tensors.insert("conditioner.embedders.3");
         }
+#endif
         bool success = model_loader.load_tensors(tensors, backend, ignore_tensors, enable_mmap);
         if (!success) {
             LOG_ERROR("load tensors from model loader failed");
@@ -372,12 +378,14 @@ public:
         }
 
         // LOG_DEBUG("model size = %.2fMB", total_size / 1024.0 / 1024.0);
-
+#ifdef IMAGE_INPUT_OR_VID
         if (version == VERSION_SVD) {
             // diffusion_model->test();
             // first_stage_model->test();
             // return false;
-        } else {
+        } else
+#endif
+        {
             size_t clip_params_mem_size = cond_stage_model->get_params_buffer_size();
             size_t unet_params_mem_size = diffusion_model->get_params_buffer_size();
             size_t vae_params_mem_size  = 0;
@@ -456,11 +464,13 @@ public:
             if (is_using_v_parameterization_for_sd2(ctx)) {
                 is_using_v_parameterization = true;
             }
-        } else if (version == VERSION_SVD) {
+        } else
+#ifdef IMAGE_INPUT_OR_VID
+            if (version == VERSION_SVD) {
             // TODO: V_PREDICTION_EDM
             is_using_v_parameterization = true;
         }
-
+#endif
         if (is_using_v_parameterization) {
             denoiser = std::make_shared<CompVisVDenoiser>();
             LOG_INFO("running in v-prediction mode");
@@ -815,6 +825,7 @@ public:
         return {hidden_states, vec};
     }
 
+#ifdef IMAGE_INPUT_OR_VID
     std::tuple<ggml_tensor*, ggml_tensor*, ggml_tensor*> get_svd_condition(ggml_context* work_ctx,
                                                                            sd_image_t init_image,
                                                                            int width,
@@ -896,6 +907,7 @@ public:
         LOG_DEBUG("computing svd condition graph completed, taking %" PRId64 " ms", t1 - t0);
         return {c_crossattn, c_concat, y};
     }
+#endif
 
     ggml_tensor* sample(ggml_context* work_ctx,
                         ggml_tensor* x_t,
@@ -1288,6 +1300,7 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
     ggml_tensor* init_img              = NULL;
     ggml_tensor* prompts_embeds        = NULL;
     ggml_tensor* pooled_prompts_embeds = NULL;
+#ifdef I2I2J
     std::vector<bool> class_tokens_mask;
     if (sd_ctx->sd->stacked_id) {
         if (!sd_ctx->sd->pmid_lora->applied) {
@@ -1375,7 +1388,7 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
         }
         input_id_images.clear();
     }
-
+#endif
     // Get learned condition
     t0                    = ggml_time_ms();
     auto cond_pair        = sd_ctx->sd->get_learned_condition(work_ctx, prompt, clip_skip, width, height);
@@ -1671,6 +1684,7 @@ sd_image_t* img2img(sd_ctx_t* sd_ctx,
     return result_images;
 }
 
+#ifdef I2I2J
 SD_API sd_image_t* img2vid(sd_ctx_t* sd_ctx,
                            sd_image_t init_image,
                            int width,
@@ -1810,3 +1824,4 @@ SD_API sd_image_t* img2vid(sd_ctx_t* sd_ctx,
 
     return result_images;
 }
+#endif

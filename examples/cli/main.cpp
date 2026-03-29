@@ -9,11 +9,11 @@
 
 // #include "preprocessing.hpp"
 #include "stable-diffusion.h"
-
+#ifdef IMAGE_INPUT_OR_VID
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_STATIC
 #include "stb_image.h"
-
+#endif
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_STATIC
 #include "stb_image_write.h"
@@ -61,15 +61,19 @@ const char* scheduler_str[] = {
 
 const char* modes_str[] = {
     "txt2img",
+#ifdef IMAGE_INPUT_OR_VID
     "img2img",
     "img2vid",
+#endif
     "convert",
 };
 
 enum SDMode {
     TXT2IMG,
+#ifdef IMAGE_INPUT_OR_VID
     IMG2IMG,
     IMG2VID,
+#endif
     CONVERT,
     MODE_COUNT
 };
@@ -136,20 +140,23 @@ void print_params(SDParams params) {
     printf("    vae_path:          %s\n", params.vae_path.c_str());
     printf("    taesd_path:        %s\n", params.taesd_path.c_str());
     printf("    esrgan_path:       %s\n", params.esrgan_path.c_str());
-    printf("    controlnet_path:   %s\n", params.controlnet_path.c_str());
     printf("    embeddings_path:   %s\n", params.embeddings_path.c_str());
+    printf("    output_path:       %s\n", params.output_path.c_str());
+#ifdef IMAGE_INPUT_OR_VID
+    printf("    controlnet_path:   %s\n", params.controlnet_path.c_str());
     printf("    stacked_id_embeddings_path:   %s\n", params.stacked_id_embeddings_path.c_str());
     printf("    input_id_images_path:   %s\n", params.input_id_images_path.c_str());
     printf("    style ratio:       %.2f\n", params.style_ratio);
     printf("    normzalize input image :  %s\n", params.normalize_input ? "true" : "false");
-    printf("    output_path:       %s\n", params.output_path.c_str());
     printf("    init_img:          %s\n", params.input_path.c_str());
     printf("    control_image:     %s\n", params.control_image_path.c_str());
+    printf("    controlnet cpu:    %s\n", params.control_net_cpu ? "true" : "false");
+    printf("    strength(control): %.2f\n", params.control_strength);
+    printf("    strength(img2img): %.2f\n", params.strength);
+#endif
     printf("    clip on cpu:       %s\n", params.clip_on_cpu ? "true" : "false");
     printf("    enable_mmap:       %s\n", params.enable_mmap ? "true" : "false");
-    printf("    controlnet cpu:    %s\n", params.control_net_cpu ? "true" : "false");
     printf("    vae decoder on cpu:%s\n", params.vae_on_cpu ? "true" : "false");
-    printf("    strength(control): %.2f\n", params.control_strength);
     printf("    prompt:            %s\n", params.prompt.c_str());
     printf("    negative_prompt:   %s\n", params.negative_prompt.c_str());
     printf("    min_cfg:           %.2f\n", params.min_cfg);
@@ -161,7 +168,6 @@ void print_params(SDParams params) {
     printf("    sample_method:     %s\n", sample_method_str[params.sample_method]);
     printf("    scheduler:         %s\n", scheduler_str[params.scheduler]);
     printf("    sample_steps:      %d\n", params.sample_steps);
-    printf("    strength(img2img): %.2f\n", params.strength);
     printf("    rng:               %s\n", rng_type_to_str[params.rng_type]);
     printf("    seed:              %ld\n", params.seed);
     printf("    batch_count:       %d\n", params.batch_count);
@@ -184,27 +190,33 @@ void print_usage(int argc, const char* argv[]) {
     printf("  -m, --model [MODEL]                path to model\n");
     printf("  --vae [VAE]                        path to vae\n");
     printf("  --taesd [TAESD_PATH]               path to taesd. Using Tiny AutoEncoder for fast decoding (low quality)\n");
-    printf("  --control-net [CONTROL_PATH]       path to control net model\n");
     printf("  --embd-dir [EMBEDDING_PATH]        path to embeddings.\n");
+#ifdef IMAGE_INPUT_OR_VID
+    printf("  --control-net [CONTROL_PATH]       path to control net model\n");
     printf("  --stacked-id-embd-dir [DIR]        path to PHOTOMAKER stacked id embeddings.\n");
     printf("  --input-id-images-dir [DIR]        path to PHOTOMAKER input id images dir.\n");
     printf("  --normalize-input                  normalize PHOTOMAKER input id images\n");
+#endif
     printf("  --upscale-model [ESRGAN_PATH]      path to esrgan model. Upscale images after generate, just RealESRGAN_x4plus_anime_6B supported by now.\n");
     printf("  --upscale-repeats                  Run the ESRGAN upscaler this many times (default 1)\n");
     printf("  --type [TYPE]                      weight type (f32, f16, q4_0, q4_1, q5_0, q5_1, q8_0)\n");
     printf("                                     If not specified, the default is the type of the weight file.\n");
     printf("  --lora-model-dir [DIR]             lora model directory\n");
+#ifdef IMAGE_INPUT_OR_VID
     printf("  -i, --init-img [IMAGE]             path to the input image, required by img2img\n");
     printf("  --control-image [IMAGE]            path to image condition, control net\n");
+#endif
     printf("  -o, --output OUTPUT                path to write result image to (default: ./output.png)\n");
     printf("  -p, --prompt [PROMPT]              the prompt to render\n");
     printf("  -n, --negative-prompt PROMPT       the negative prompt (default: \"\")\n");
     printf("  --cfg-scale SCALE                  unconditional guidance scale: (default: 7.0)\n");
     printf("  --strength STRENGTH                strength for noising/unnoising (default: 0.75)\n");
     printf("  --eta SCALE                        eta in DDIM, only for DDIM and TCD: (default: 0)\n");
+#ifdef IMAGE_INPUT_OR_VID
     printf("  --style-ratio STYLE-RATIO          strength for keeping input identity (default: 20%%)\n");
     printf("  --control-strength STRENGTH        strength to apply Control Net (default: 0.9)\n");
     printf("                                     1.0 corresponds to full destruction of information in init image\n");
+#endif
     printf("  -H, --height H                     image height, in pixel space (default: 512)\n");
     printf("  -W, --width W                      image width, in pixel space (default: 512)\n");
     printf("  --sampling-method {euler, euler_a, heun, dpm2, dpm++2s_a, dpm++2m, dpm++2mv2, ipndm, ipndm_v, lcm, ddim_trailing, tcd}\n");
@@ -221,8 +233,10 @@ void print_usage(int argc, const char* argv[]) {
     printf("  --vae-tiling                       process vae in tiles to reduce memory usage\n");
     printf("  --vae-on-cpu                       keep vae on cpu (for low vram)\n");
     printf("  --clip-on-cpu                      keep clip on cpu (for low vram)\n");
+#ifdef IMAGE_INPUT_OR_VID
     printf("  --control-net-cpu                  keep controlnet in cpu (for low vram)\n");
     printf("  --canny                            apply canny preprocessor (edge detection)\n");
+#endif
     printf("  --color                            Colors the logging tags according to level\n");
     printf("  -v, --verbose                      print extra info\n");
     printf("  --version                          print stable-diffusion.cpp version\n");
@@ -254,7 +268,11 @@ void parse_args(int argc, const char** argv, SDParams& params) {
             }
             if (mode_found == -1) {
                 fprintf(stderr,
+#ifdef IMAGE_INPUT_OR_VID
                         "error: invalid mode %s, must be one of [txt2img, img2img, img2vid, convert]\n",
+#else
+                        "error: invalid mode %s, must be one of [txt2img, convert]\n",
+#endif
                         mode_selected);
                 exit(1);
             }
@@ -277,12 +295,14 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 break;
             }
             params.taesd_path = argv[i];
+#ifdef IMAGE_INPUT_OR_VID
         } else if (arg == "--control-net") {
             if (++i >= argc) {
                 invalid_arg = true;
                 break;
             }
             params.controlnet_path = argv[i];
+#endif
         } else if (arg == "--upscale-model") {
             if (++i >= argc) {
                 invalid_arg = true;
@@ -295,6 +315,7 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 break;
             }
             params.embeddings_path = argv[i];
+#ifdef IMAGE_INPUT_OR_VID
         } else if (arg == "--stacked-id-embd-dir") {
             if (++i >= argc) {
                 invalid_arg = true;
@@ -307,6 +328,7 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 break;
             }
             params.input_id_images_path = argv[i];
+#endif
         } else if (arg == "--type") {
             if (++i >= argc) {
                 invalid_arg = true;
@@ -338,6 +360,7 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 break;
             }
             params.lora_model_dir = argv[i];
+#ifdef IMAGE_INPUT_OR_VID
         } else if (arg == "-i" || arg == "--init-img") {
             if (++i >= argc) {
                 invalid_arg = true;
@@ -350,6 +373,7 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 break;
             }
             params.control_image_path = argv[i];
+#endif
         } else if (arg == "-o" || arg == "--output") {
             if (++i >= argc) {
                 invalid_arg = true;
@@ -384,6 +408,7 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 break;
             }
             params.cfg_scale = std::stof(argv[i]);
+#ifdef IMAGE_INPUT_OR_VID
         } else if (arg == "--strength") {
             if (++i >= argc) {
                 invalid_arg = true;
@@ -402,6 +427,7 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 break;
             }
             params.control_strength = std::stof(argv[i]);
+#endif
         } else if (arg == "--eta") {
             if (++i >= argc) {
                 invalid_arg = true;
@@ -436,16 +462,20 @@ void parse_args(int argc, const char** argv, SDParams& params) {
             params.enable_mmap = true;
         } else if (arg == "--vae-tiling") {
             params.vae_tiling = true;
+#ifdef IMAGE_INPUT_OR_VID
         } else if (arg == "--control-net-cpu") {
             params.control_net_cpu = true;
         } else if (arg == "--normalize-input") {
             params.normalize_input = true;
+#endif
         } else if (arg == "--clip-on-cpu") {
             params.clip_on_cpu = true;  // will slow down get_learned_condiotion but necessary for low MEM GPUs
         } else if (arg == "--vae-on-cpu") {
             params.vae_on_cpu = true;  // will slow down latent decoding but necessary for low MEM GPUs
+#ifdef IMAGE_INPUT_OR_VID
         } else if (arg == "--canny") {
             params.canny_preprocess = true;
+#endif
         } else if (arg == "-b" || arg == "--batch-count") {
             if (++i >= argc) {
                 invalid_arg = true;
@@ -529,25 +559,27 @@ void parse_args(int argc, const char** argv, SDParams& params) {
     if (params.n_threads <= 0) {
         params.n_threads = get_num_physical_cores();
     }
-
+#ifdef IMAGE_INPUT_OR_VID
     if (params.mode != CONVERT && params.mode != IMG2VID && params.prompt.length() == 0) {
+#else
+    if (params.mode != CONVERT && params.prompt.length() == 0) {
+#endif
         fprintf(stderr, "error: the following arguments are required: prompt\n");
         print_usage(argc, argv);
         exit(1);
     }
-
     if (params.model_path.length() == 0) {
         fprintf(stderr, "error: the following arguments are required: model_path\n");
         print_usage(argc, argv);
         exit(1);
     }
-
+#ifdef IMAGE_INPUT_OR_VID
     if ((params.mode == IMG2IMG || params.mode == IMG2VID) && params.input_path.length() == 0) {
         fprintf(stderr, "error: when using the img2img mode, the following arguments are required: init-img\n");
         print_usage(argc, argv);
         exit(1);
     }
-
+#endif
     if (params.output_path.length() == 0) {
         fprintf(stderr, "error: the following arguments are required: output_path\n");
         print_usage(argc, argv);
@@ -568,12 +600,12 @@ void parse_args(int argc, const char** argv, SDParams& params) {
         fprintf(stderr, "error: the sample_steps must be greater than 0\n");
         exit(1);
     }
-
+#ifdef IMAGE_INPUT_OR_VID
     if (params.strength < 0.f || params.strength > 1.f) {
         fprintf(stderr, "error: can only work with strength in [0.0, 1.0]\n");
         exit(1);
     }
-
+#endif
     if (params.seed < 0) {
         srand((int)time(NULL));
         params.seed = rand();
@@ -705,15 +737,16 @@ int main(int argc, const char* argv[]) {
             return 0;
         }
     }
-
+#ifdef IMAGE_INPUT_OR_VID
     if (params.mode == IMG2VID) {
         fprintf(stderr, "SVD support is broken, do not use it!!!\n");
         return 1;
     }
-
+#endif
     bool vae_decode_only          = true;
     uint8_t* input_image_buffer   = NULL;
     uint8_t* control_image_buffer = NULL;
+#ifdef IMAGE_INPUT_OR_VID
     if (params.mode == IMG2IMG || params.mode == IMG2VID) {
         vae_decode_only = false;
 
@@ -765,7 +798,7 @@ int main(int argc, const char* argv[]) {
             input_image_buffer = resized_image_buffer;
         }
     }
-
+#endif
     sd_ctx_t* sd_ctx = new_sd_ctx(params.model_path.c_str(),
                                   params.vae_path.c_str(),
                                   params.taesd_path.c_str(),
@@ -789,8 +822,8 @@ int main(int argc, const char* argv[]) {
         printf("new_sd_ctx_t failed\n");
         return 1;
     }
-
     sd_image_t* control_image = NULL;
+#ifdef IMAGE_INPUT_OR_VID
     if (params.controlnet_path.size() > 0 && params.control_image_path.size() > 0) {
         int c                = 0;
         control_image_buffer = stbi_load(params.control_image_path.c_str(), &params.width, &params.height, &c, 3);
@@ -813,7 +846,7 @@ int main(int argc, const char* argv[]) {
                                                    false);
         }
     }
-
+#endif
     sd_image_t* results;
     if (params.mode == TXT2IMG) {
         results = txt2img(sd_ctx,
@@ -838,7 +871,7 @@ int main(int argc, const char* argv[]) {
                                   (uint32_t)params.height,
                                   3,
                                   input_image_buffer};
-
+#ifdef IMAGE_INPUT_OR_VID
         if (params.mode == IMG2VID) {
             results = img2vid(sd_ctx,
                               input_image,
@@ -896,6 +929,7 @@ int main(int argc, const char* argv[]) {
                               params.input_id_images_path.c_str(),
                               params.eta);
         }
+#endif
     }
 
     if (results == NULL) {
