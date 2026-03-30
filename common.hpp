@@ -461,6 +461,7 @@ public:
     }
 };
 
+#ifdef IMAGE_INPUT_OR_VID
 class AlphaBlender : public GGMLBlock {
 protected:
     void init_params(struct ggml_context* ctx, ggml_type wtype) {
@@ -540,5 +541,5 @@ public:
         return x;
     }
 };
-
+#endif
 #endif  // __COMMON_HPP__

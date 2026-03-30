@@ -101,7 +101,9 @@ public:
     std::shared_ptr<AutoEncoderKL> first_stage_model;
     std::shared_ptr<TinyAutoEncoder> tae_first_stage;
     std::shared_ptr<ControlNet> control_net;
+#ifdef IMAGE_INPUT_OR_VID
     std::shared_ptr<PhotoMakerIDEncoder> pmid_model;
+#endif
     std::shared_ptr<LoraModel> pmid_lora;
 
     std::string taesd_path;
@@ -299,7 +301,7 @@ public:
                 }
                 control_net = std::make_shared<ControlNet>(controlnet_backend, model_data_type, version);
             }
-
+#ifdef IMAGE_INPUT_OR_VID
             pmid_model = std::make_shared<PhotoMakerIDEncoder>(clip_backend, model_data_type, version);
             if (id_embeddings_path.size() > 0) {
                 pmid_lora = std::make_shared<LoraModel>(backend, model_data_type, id_embeddings_path, "");
@@ -327,7 +329,7 @@ public:
             //    pmid_model.init_params(GGML_TYPE_F32);
             //    pmid_model.map_by_name(tensors, "pmid.");
             // }
-
+#endif
             LOG_DEBUG("loading vocab");
             std::string merges_utf8_str = model_loader.load_merges();
             if (merges_utf8_str.size() == 0) {
@@ -406,10 +408,11 @@ public:
                 control_net_params_mem_size = control_net->get_params_buffer_size();
             }
             size_t pmid_params_mem_size = 0;
+#ifdef IMAGE_INPUT_OR_VID
             if (stacked_id) {
                 pmid_params_mem_size = pmid_model->get_params_buffer_size();
             }
-
+#endif
             size_t total_params_ram_size  = 0;
             size_t total_params_vram_size = 0;
             if (ggml_backend_is_cpu(clip_backend)) {
@@ -686,8 +689,9 @@ public:
                             ggml_tensor* prompts_embeds,
                             std::vector<bool>& class_tokens_mask) {
         ggml_tensor* res = NULL;
+#ifdef IMAGE_INPUT_OR_VID
         pmid_model->compute(n_threads, init_img, prompts_embeds, class_tokens_mask, &res, work_ctx);
-
+#endif
         return res;
     }
 
@@ -1442,15 +1446,15 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
             noise = ggml_new_tensor_4d(work_ctx, GGML_TYPE_F32, W, H, C, 1);
             ggml_tensor_set_f32_randn(noise, sd_ctx->sd->rng);
         }
-
         int start_merge_step = -1;
+#ifdef IMAGE_INPUT_OR_VID
         if (sd_ctx->sd->stacked_id) {
             start_merge_step = int(sd_ctx->sd->pmid_model->style_strength / 100.f * sample_steps);
             // if (start_merge_step > 30)
             //     start_merge_step = 30;
             LOG_INFO("PHOTOMAKER: start_merge_step: %d", start_merge_step);
         }
-
+#endif
         struct ggml_tensor* x_0 = sd_ctx->sd->sample(work_ctx,
                                                      x_t,
                                                      noise,

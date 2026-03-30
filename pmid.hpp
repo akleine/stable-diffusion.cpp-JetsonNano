@@ -1,6 +1,6 @@
 #ifndef __PMI_HPP__
 #define __PMI_HPP__
-
+#ifdef IMAGE_INPUT_OR_VID
 #include "ggml_extend.hpp"
 
 #include "clip.hpp"
@@ -291,5 +291,5 @@ public:
         GGMLModule::compute(get_graph, n_threads, true, updated_prompt_embeds, output_ctx);
     }
 };
-
+#endif
 #endif  // __PMI_HPP__

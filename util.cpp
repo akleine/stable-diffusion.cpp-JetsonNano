@@ -203,7 +203,6 @@ bool is_directory(const std::string& path) {
     return (stat(path.c_str(), &buffer) == 0 && S_ISDIR(buffer.st_mode));
 }
 
-
 std::string get_full_path(const std::string& dir, const std::string& filename) {
     DIR* dp = opendir(dir.c_str());
 

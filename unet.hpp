@@ -242,9 +242,12 @@ public:
         int ds              = 1;
 
         auto get_resblock = [&](int64_t channels, int64_t emb_channels, int64_t out_channels) -> ResBlock* {
+#ifdef IMAGE_INPUT_OR_VID
             if (version == VERSION_SVD) {
                 return new VideoResBlock(channels, emb_channels, out_channels);
-            } else {
+            } else
+#endif
+            {
                 return new ResBlock(channels, emb_channels, out_channels);
             }
         };
@@ -392,11 +395,14 @@ public:
                                          struct ggml_tensor* x,
                                          struct ggml_tensor* emb,
                                          int num_video_frames) {
+#ifdef IMAGE_INPUT_OR_VID
         if (version == VERSION_SVD) {
             auto block = std::dynamic_pointer_cast<VideoResBlock>(blocks[name]);
 
             return block->forward(ctx, x, emb, num_video_frames);
-        } else {
+        } else
+#endif
+        {
             auto block = std::dynamic_pointer_cast<ResBlock>(blocks[name]);
 
             return block->forward(ctx, x, emb);
