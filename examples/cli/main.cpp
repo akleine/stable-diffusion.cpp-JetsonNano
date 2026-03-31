@@ -1,3 +1,4 @@
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -107,28 +108,29 @@ struct SDParams {
     int height        = 512;
     int batch_count   = 1;
 
+    sample_method_t sample_method = EULER_A;
+    scheduler_t scheduler         = DEFAULT;
+    int sample_steps              = 20;
+#ifdef IMAGE_INPUT_OR_VID
     int video_frames         = 6;
     int motion_bucket_id     = 127;
     int fps                  = 6;
     float augmentation_level = 0.f;
-
-    sample_method_t sample_method = EULER_A;
-    scheduler_t scheduler         = DEFAULT;
-    int sample_steps              = 20;
-    float strength                = 0.75f;
-    float control_strength        = 0.9f;
-    rng_type_t rng_type           = CUDA_RNG;
-    int64_t seed                  = 42;
-    bool verbose                  = false;
-    bool vae_tiling               = false;
-    bool control_net_cpu          = false;
-    bool normalize_input          = false;
-    bool clip_on_cpu              = false;
-    bool vae_on_cpu               = false;
-    bool enable_mmap              = false;
-    bool canny_preprocess         = false;
-    bool color                    = false;
-    int upscale_repeats           = 1;
+    float strength           = 0.75f;
+    float control_strength   = 0.9f;
+    bool control_net_cpu     = false;
+    bool canny_preprocess    = false;
+#endif
+    rng_type_t rng_type  = CUDA_RNG;
+    int64_t seed         = 42;
+    bool verbose         = false;
+    bool vae_tiling      = false;
+    bool normalize_input = false;
+    bool clip_on_cpu     = false;
+    bool vae_on_cpu      = false;
+    bool enable_mmap     = false;
+    bool color           = false;
+    int upscale_repeats  = 1;
 };
 
 void print_params(SDParams params) {
@@ -169,7 +171,7 @@ void print_params(SDParams params) {
     printf("    scheduler:         %s\n", scheduler_str[params.scheduler]);
     printf("    sample_steps:      %d\n", params.sample_steps);
     printf("    rng:               %s\n", rng_type_to_str[params.rng_type]);
-    printf("    seed:              %ld\n", params.seed);
+    printf("    seed:              %" PRId64 "\n", params.seed);
     printf("    batch_count:       %d\n", params.batch_count);
     printf("    vae_tiling:        %s\n", params.vae_tiling ? "true" : "false");
     printf("    upscale_repeats:   %d\n", params.upscale_repeats);
@@ -184,7 +186,7 @@ void print_usage(int argc, const char* argv[]) {
     printf("\n");
     printf("arguments:\n");
     printf("  -h, --help                         show this help message and exit\n");
-    printf("  -M, --mode [MODEL]                 run mode (txt2img or img2img or convert, default: txt2img)\n");
+    printf("  -M, --mode [MODEL]                 run mode (txt2img or convert, default: txt2img)\n");
     printf("  -t, --threads N                    number of threads to use during computation (default: -1).\n");
     printf("                                     If threads <= 0, then threads will be set to the number of CPU physical cores\n");
     printf("  -m, --model [MODEL]                path to model\n");
@@ -210,23 +212,23 @@ void print_usage(int argc, const char* argv[]) {
     printf("  -p, --prompt [PROMPT]              the prompt to render\n");
     printf("  -n, --negative-prompt PROMPT       the negative prompt (default: \"\")\n");
     printf("  --cfg-scale SCALE                  unconditional guidance scale: (default: 7.0)\n");
-    printf("  --strength STRENGTH                strength for noising/unnoising (default: 0.75)\n");
     printf("  --eta SCALE                        eta in DDIM, only for DDIM and TCD: (default: 0)\n");
 #ifdef IMAGE_INPUT_OR_VID
+    printf("  --strength STRENGTH                strength for noising/unnoising (default: 0.75)\n");
     printf("  --style-ratio STYLE-RATIO          strength for keeping input identity (default: 20%%)\n");
     printf("  --control-strength STRENGTH        strength to apply Control Net (default: 0.9)\n");
     printf("                                     1.0 corresponds to full destruction of information in init image\n");
 #endif
     printf("  -H, --height H                     image height, in pixel space (default: 512)\n");
     printf("  -W, --width W                      image width, in pixel space (default: 512)\n");
-    printf("  --sampling-method {euler, euler_a, heun, dpm2, dpm++2s_a, dpm++2m, dpm++2mv2, ipndm, ipndm_v, lcm, ddim_trailing, tcd}\n");
-    printf("                                     sampling method (default: \"euler_a\")\n");
     printf("  --steps  STEPS                     number of sample steps (default: 20)\n");
     printf("  --rng {std_default, cuda, cpu}     RNG (default: cuda)\n");
     printf("  -s SEED, --seed SEED               RNG seed (default: 42, use random seed for < 0)\n");
     printf("  -b, --batch-count COUNT            number of images to generate.\n");
-    printf("  --scheduler {discrete, karras, exponential, ays, gits, sgm_uniform, simple, smoothstep, kl_optimal, lcm}\n");
-    printf("                                     Denoiser sigma scheduler (default: discrete)\n");
+    printf("  --sampling-method {SAMPLER}        sampling method (default: \"euler_a\")\n");
+    printf("                                     SAMPLER: one of {euler, euler_a, heun, dpm2, dpm++2s_a, dpm++2m, dpm++2mv2, ipndm, ipndm_v, lcm, ddim_trailing, tcd}\n");
+    printf("  --scheduler {SCHEDULER}            Denoiser sigma scheduler (default: discrete)\n");
+    printf("                                     SCHEDULER: one of {discrete, karras, exponential, ays, gits, sgm_uniform, simple, smoothstep, kl_optimal, lcm}\n");
     printf("  --clip-skip N                      ignore last layers of CLIP network; 1 ignores none, 2 ignores one layer (default: -1)\n");
     printf("                                     <= 0 represents unspecified, will be 1 for SD1.x, 2 for SD2.x\n");
     printf("  --mmap                             whether to memory-map model files\n");
@@ -814,7 +816,7 @@ int main(int argc, const char* argv[]) {
                                   params.rng_type,
                                   params.scheduler,
                                   params.clip_on_cpu,
-                                  params.control_net_cpu,
+                                  false,  // was params.control_net_cpu,
                                   params.vae_on_cpu,
                                   params.enable_mmap);
 
@@ -861,7 +863,7 @@ int main(int argc, const char* argv[]) {
                           params.seed,
                           params.batch_count,
                           control_image,
-                          params.control_strength,
+                          0.f,  // params.control_strength,
                           params.style_ratio,
                           params.normalize_input,
                           params.input_id_images_path.c_str(),

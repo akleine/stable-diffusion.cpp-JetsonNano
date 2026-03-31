@@ -12,7 +12,10 @@
 #include "denoiser.hpp"
 #include "esrgan.hpp"
 #include "lora.hpp"
+
+#ifdef IMAGE_INPUT_OR_VID
 #include "pmid.hpp"
+#endif
 #include "tae.hpp"
 #include "unet.hpp"
 #include "vae.hpp"
@@ -28,9 +31,9 @@
 // #include "stb_image_write.h"
 
 const char* model_version_to_str[] = {
-    "1.x",
-    "2.x",
-    "XL",
+    "SD 1.x",
+    "SD 2.x",
+    "SDXL",
     "SVD",
     "SD 1.x Tiny UNet",
     "SD 1.x Medium UNet",
@@ -103,9 +106,8 @@ public:
     std::shared_ptr<ControlNet> control_net;
 #ifdef IMAGE_INPUT_OR_VID
     std::shared_ptr<PhotoMakerIDEncoder> pmid_model;
-#endif
     std::shared_ptr<LoraModel> pmid_lora;
-
+#endif
     std::string taesd_path;
     bool use_tiny_autoencoder = false;
     bool vae_tiling           = false;
@@ -1304,7 +1306,7 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
     ggml_tensor* init_img              = NULL;
     ggml_tensor* prompts_embeds        = NULL;
     ggml_tensor* pooled_prompts_embeds = NULL;
-#ifdef I2I2J
+#ifdef IMAGE_INPUT_OR_VID
     std::vector<bool> class_tokens_mask;
     if (sd_ctx->sd->stacked_id) {
         if (!sd_ctx->sd->pmid_lora->applied) {
@@ -1688,7 +1690,7 @@ sd_image_t* img2img(sd_ctx_t* sd_ctx,
     return result_images;
 }
 
-#ifdef I2I2J
+#ifdef IMAGE_INPUT_OR_VID
 SD_API sd_image_t* img2vid(sd_ctx_t* sd_ctx,
                            sd_image_t init_image,
                            int width,
