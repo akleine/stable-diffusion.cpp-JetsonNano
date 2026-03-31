@@ -171,7 +171,7 @@ public:
                         bool vae_on_cpu,
                         bool enable_mmap_) {
         use_tiny_autoencoder = taesd_path.size() > 0;
-#ifdef SD_USE_CUBLAS
+#ifdef SD_USE_CUDA
         LOG_DEBUG("Using CUDA backend");
         backend = ggml_backend_cuda_init(0);
 #endif
@@ -186,7 +186,7 @@ public:
             backend = ggml_backend_cpu_init();
         }
 #ifdef SD_USE_FLASH_ATTENTION
-#if defined(SD_USE_CUBLAS) || defined(SD_USE_METAL)
+#if defined(SD_USE_CUDA) || defined(SD_USE_METAL)
         LOG_WARN("Flash Attention not supported with GPU Backend");
 #else
         LOG_INFO("Flash Attention enabled");
