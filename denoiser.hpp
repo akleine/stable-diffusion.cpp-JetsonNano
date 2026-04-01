@@ -175,10 +175,6 @@ struct AYSScheduler : SigmaScheduler {
                 LOG_INFO("AYS using SDXL noise levels");
                 inputs = noise_levels[1];
                 break;
-            case VERSION_SVD:
-                LOG_INFO("AYS using SVD noise levels");
-                inputs = noise_levels[2];
-                break;
             default:
                 LOG_ERROR("Version not compatable with AYS scheduler");
                 return results;

@@ -97,44 +97,7 @@ std::string get_full_path(const std::string& dir, const std::string& filename) {
         return "";
     }
 }
-#ifdef IMAGE_INPUT_OR_VID
-std::vector<std::string> get_files_from_dir(const std::string& dir) {
-    std::vector<std::string> files;
 
-    WIN32_FIND_DATA findFileData;
-    HANDLE hFind;
-
-    char currentDirectory[MAX_PATH];
-    GetCurrentDirectory(MAX_PATH, currentDirectory);
-
-    char directoryPath[MAX_PATH];  // this is absolute path
-    sprintf(directoryPath, "%s\\%s\\*", currentDirectory, dir.c_str());
-
-    // Find the first file in the directory
-    hFind = FindFirstFile(directoryPath, &findFileData);
-
-    // Check if the directory was found
-    if (hFind == INVALID_HANDLE_VALUE) {
-        printf("Unable to find directory.\n");
-        return files;
-    }
-
-    // Loop through all files in the directory
-    do {
-        // Check if the found file is a regular file (not a directory)
-        if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-            files.push_back(std::string(currentDirectory) + "\\" + dir + "\\" + std::string(findFileData.cFileName));
-        }
-    } while (FindNextFile(hFind, &findFileData) != 0);
-
-    // Close the handle
-    FindClose(hFind);
-
-    sort(files.begin(), files.end());
-
-    return files;
-}
-#endif
 // Windows code copied from https://github.com/leejet/stable-diffusion.cpp/pull/1059/changes
 // but NOT TESTED, because this util.cpp is intended for the Jetson Nano running *Linux*
 // akleine, Mar 2026
@@ -221,29 +184,6 @@ std::string get_full_path(const std::string& dir, const std::string& filename) {
 
     return "";
 }
-
-#ifdef IMAGE_INPUT_OR_VID
-std::vector<std::string> get_files_from_dir(const std::string& dir) {
-    std::vector<std::string> files;
-
-    DIR* dp = opendir(dir.c_str());
-
-    if (dp != nullptr) {
-        struct dirent* entry;
-
-        while ((entry = readdir(dp)) != nullptr) {
-            std::string fname = dir + "/" + entry->d_name;
-            if (!is_directory(fname))
-                files.push_back(fname);
-        }
-        closedir(dp);
-    }
-
-    sort(files.begin(), files.end());
-
-    return files;
-}
-#endif
 
 class MmapWrapperImpl : public MmapWrapper {
 public:
