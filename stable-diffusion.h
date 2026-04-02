@@ -127,10 +127,8 @@ typedef struct sd_ctx_t sd_ctx_t;
 SD_API sd_ctx_t* new_sd_ctx(const char* model_path,
                             const char* vae_path,
                             const char* taesd_path,
-                            const char* control_net_path_c_str,
                             const char* lora_model_dir,
                             const char* embed_dir_c_str,
-                            const char* stacked_id_embed_dir_c_str,
                             bool vae_decode_only,
                             bool vae_tiling,
                             bool free_params_immediately,
@@ -139,7 +137,6 @@ SD_API sd_ctx_t* new_sd_ctx(const char* model_path,
                             enum rng_type_t rng_type,
                             enum scheduler_t s,
                             bool keep_clip_on_cpu,
-                            bool keep_control_net_cpu,
                             bool keep_vae_on_cpu,
                             bool enable_mmap);
 
@@ -156,11 +153,6 @@ SD_API sd_image_t* txt2img(sd_ctx_t* sd_ctx,
                            int sample_steps,
                            int64_t seed,
                            int batch_count,
-                           const sd_image_t* control_cond,
-                           float control_strength,
-                           float style_strength,
-                           bool normalize_input,
-                           const char* input_id_images_path,
                            float eta);
 
 typedef struct upscaler_ctx_t upscaler_ctx_t;

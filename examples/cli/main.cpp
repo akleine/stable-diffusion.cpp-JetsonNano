@@ -8,7 +8,6 @@
 #include <string>
 #include <vector>
 
-// #include "preprocessing.hpp"
 #include "stable-diffusion.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_STATIC
@@ -74,26 +73,18 @@ struct SDParams {
     std::string vae_path;
     std::string taesd_path;
     std::string esrgan_path;
-    std::string controlnet_path;
     std::string embeddings_path;
-    std::string stacked_id_embeddings_path;
-    std::string input_id_images_path;
     sd_type_t wtype = SD_TYPE_COUNT;
     std::string lora_model_dir;
     std::string output_path = "output.png";
-    std::string input_path;
-    std::string control_image_path;
-
     std::string prompt;
     std::string negative_prompt;
-    float min_cfg     = 1.0f;
-    float cfg_scale   = 7.0f;
-    float eta         = 0.f;
-    float style_ratio = 20.f;
-    int clip_skip     = -1;  // <= 0 represents unspecified
-    int width         = 512;
-    int height        = 512;
-    int batch_count   = 1;
+    float cfg_scale = 7.0f;
+    float eta       = 0.f;
+    int clip_skip   = -1;  // <= 0 represents unspecified
+    int width       = 512;
+    int height      = 512;
+    int batch_count = 1;
 
     sample_method_t sample_method = EULER_A;
     scheduler_t scheduler         = DEFAULT;
@@ -102,7 +93,6 @@ struct SDParams {
     int64_t seed                  = 42;
     bool verbose                  = false;
     bool vae_tiling               = false;
-    bool normalize_input          = false;
     bool clip_on_cpu              = false;
     bool vae_on_cpu               = false;
     bool enable_mmap              = false;
@@ -126,7 +116,6 @@ void print_params(SDParams params) {
     printf("    vae decoder on cpu:%s\n", params.vae_on_cpu ? "true" : "false");
     printf("    prompt:            %s\n", params.prompt.c_str());
     printf("    negative_prompt:   %s\n", params.negative_prompt.c_str());
-    printf("    min_cfg:           %.2f\n", params.min_cfg);
     printf("    cfg_scale:         %.2f\n", params.cfg_scale);
     printf("    eta:               %.2f\n", params.eta);
     printf("    clip_skip:         %d\n", params.clip_skip);
@@ -167,7 +156,7 @@ void print_usage(int argc, const char* argv[]) {
     printf("  -p, --prompt [PROMPT]              the prompt to render\n");
     printf("  -n, --negative-prompt PROMPT       the negative prompt (default: \"\")\n");
     printf("  --cfg-scale SCALE                  unconditional guidance scale: (default: 7.0)\n");
-    printf("  --eta SCALE                        eta in DDIM, only for DDIM and TCD: (default: 0)\n");
+    printf("  --eta SCALE                        eta in DDIM, only for DDIM and TCD samplers: (default: 0)\n");
     printf("  -H, --height H                     image height, in pixel space (default: 512)\n");
     printf("  -W, --width W                      image width, in pixel space (default: 512)\n");
     printf("  --steps  STEPS                     number of sample steps (default: 20)\n");
@@ -544,7 +533,6 @@ void sd_log_cb(enum sd_log_level_t level, const char* log, void* data) {
             level_str = "?????";
             break;
     }
-
     if (params->color == true) {
         fprintf(out_stream, "\033[%d;1m[%-5s]\033[0m ", tag_color, level_str);
     } else {
@@ -561,19 +549,15 @@ int main(int argc, const char* argv[]) {
     }
     SDParams params;
     parse_args(argc, argv, params);
-
     sd_set_log_callback(sd_log_cb, (void*)&params);
-
     if (params.sample_method == LCM && params.scheduler == DEFAULT) {
         params.scheduler = LCM_SCHEDULER;
     }
-
     if (params.verbose) {
         std::cout << version_string() << "\n";
         print_params(params);
         printf("%s", sd_get_system_info());
     }
-
     if (params.mode == CONVERT) {
         bool success = convert(params.model_path.c_str(), params.vae_path.c_str(), params.output_path.c_str(), params.wtype);
         if (!success) {
@@ -591,65 +575,43 @@ int main(int argc, const char* argv[]) {
             return 0;
         }
     }
-    bool vae_decode_only          = true;
-    uint8_t* input_image_buffer   = NULL;
-    uint8_t* control_image_buffer = NULL;
-
-    sd_ctx_t* sd_ctx = new_sd_ctx(params.model_path.c_str(),
-                                  params.vae_path.c_str(),
-                                  params.taesd_path.c_str(),
-                                  params.controlnet_path.c_str(),
-                                  params.lora_model_dir.c_str(),
-                                  params.embeddings_path.c_str(),
-                                  params.stacked_id_embeddings_path.c_str(),
-                                  vae_decode_only,
-                                  params.vae_tiling,
-                                  true,
-                                  params.n_threads,
-                                  params.wtype,
-                                  params.rng_type,
-                                  params.scheduler,
-                                  params.clip_on_cpu,
-                                  false,  // was params.control_net_cpu,
-                                  params.vae_on_cpu,
-                                  params.enable_mmap);
-
+    bool vae_decode_only = true;
+    sd_ctx_t* sd_ctx     = new_sd_ctx(params.model_path.c_str(),
+                                      params.vae_path.c_str(),
+                                      params.taesd_path.c_str(),
+                                      params.lora_model_dir.c_str(),
+                                      params.embeddings_path.c_str(),
+                                      vae_decode_only,
+                                      params.vae_tiling,
+                                      true,
+                                      params.n_threads,
+                                      params.wtype,
+                                      params.rng_type,
+                                      params.scheduler,
+                                      params.clip_on_cpu,
+                                      params.vae_on_cpu,
+                                      params.enable_mmap);
     if (sd_ctx == NULL) {
         printf("new_sd_ctx_t failed\n");
         return 1;
     }
-    sd_image_t* control_image = NULL;
-    sd_image_t* results;
-    if (params.mode == TXT2IMG) {
-        results = txt2img(sd_ctx,
-                          params.prompt.c_str(),
-                          params.negative_prompt.c_str(),
-                          params.clip_skip,
-                          params.cfg_scale,
-                          params.width,
-                          params.height,
-                          params.sample_method,
-                          params.sample_steps,
-                          params.seed,
-                          params.batch_count,
-                          control_image,
-                          0.f,  // params.control_strength,
-                          params.style_ratio,
-                          params.normalize_input,
-                          params.input_id_images_path.c_str(),
-                          params.eta);
-    } else {
-        sd_image_t input_image = {(uint32_t)params.width,
-                                  (uint32_t)params.height,
-                                  3,
-                                  input_image_buffer};
-    }
+    sd_image_t* results = txt2img(sd_ctx,
+                                  params.prompt.c_str(),
+                                  params.negative_prompt.c_str(),
+                                  params.clip_skip,
+                                  params.cfg_scale,
+                                  params.width,
+                                  params.height,
+                                  params.sample_method,
+                                  params.sample_steps,
+                                  params.seed,
+                                  params.batch_count,
+                                  params.eta);
     if (results == NULL) {
         printf("generate failed\n");
         free_sd_ctx(sd_ctx);
         return 1;
     }
-
     int upscale_factor = 4;  // unused for RealESRGAN_x4plus_anime_6B.pth
     if (params.esrgan_path.size() > 0 && params.upscale_repeats > 0) {
         upscaler_ctx_t* upscaler_ctx = new_upscaler_ctx(params.esrgan_path.c_str(),
@@ -698,19 +660,16 @@ int main(int argc, const char* argv[]) {
         dummy_name += ext;
         ext = ".png";
     }
-
     for (int i = 0; i < params.batch_count; i++) {
         if (results[i].data == NULL) {
             continue;
         }
         int write_ok;
         std::string final_image_path = i > 0 ? dummy_name + "_" + std::to_string(i + 1) + ext : dummy_name + ext;
-
         if (is_jpg) {
             write_ok = stbi_write_jpg(final_image_path.c_str(), results[i].width, results[i].height, results[i].channel,
                                       results[i].data, 90, get_image_params(params, params.seed + i).c_str());
             printf("save result JPEG image to '%s' (%s)\n", final_image_path.c_str(), write_ok == 0 ? "failure" : "success");
-
         } else {
             stbi_write_png(final_image_path.c_str(), results[i].width, results[i].height, results[i].channel,
                            results[i].data, 0, get_image_params(params, params.seed + i).c_str());
@@ -721,7 +680,5 @@ int main(int argc, const char* argv[]) {
     }
     free(results);
     free_sd_ctx(sd_ctx);
-    free(control_image_buffer);
-    free(input_image_buffer);
     return 0;
 }

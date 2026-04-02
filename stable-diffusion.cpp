@@ -133,15 +133,12 @@ public:
 
     bool load_from_file(const std::string& model_path,
                         const std::string& vae_path,
-                        const std::string control_net_path,
                         const std::string embeddings_path,
-                        const std::string id_embeddings_path,
                         const std::string& taesd_path,
                         bool vae_tiling_,
                         ggml_type wtype,
                         scheduler_t scheduler,
                         bool clip_on_cpu,
-                        bool control_net_cpu,
                         bool vae_on_cpu,
                         bool enable_mmap_) {
         use_tiny_autoencoder = taesd_path.size() > 0;
@@ -154,7 +151,6 @@ public:
         ggml_backend_metal_log_set_callback(ggml_log_callback_default, nullptr);
         backend = ggml_backend_metal_init();
 #endif
-
         if (!backend) {
             LOG_DEBUG("Using CPU backend");
             backend = ggml_backend_cpu_init();
@@ -645,22 +641,15 @@ public:
 
     ggml_tensor* sample(ggml_context* work_ctx,
                         ggml_tensor* x_t,
-                        ggml_tensor* noise,
                         ggml_tensor* c,
-                        ggml_tensor* c_concat,
                         ggml_tensor* c_vector,
                         ggml_tensor* uc,
-                        ggml_tensor* uc_concat,
                         ggml_tensor* uc_vector,
                         ggml_tensor* control_hint,
-                        float control_strength,
                         float min_cfg,
                         float cfg_scale,
                         sample_method_t method,
                         const std::vector<float>& sigmas,
-                        int start_merge_step,
-                        ggml_tensor* c_id,
-                        ggml_tensor* c_vec_id,
                         float eta) {
         size_t steps = sigmas.size() - 1;
         // x_t = load_tensor_from_file(work_ctx, "./rand0.bin");
@@ -683,14 +672,8 @@ public:
             }
         }
 
-        if (noise == NULL) {
-            // x = x * sigmas[0]
-            ggml_tensor_scale(x, sigmas[0]);
-        } else {
-            // xi = x + noise * sigma_sched[0]
-            ggml_tensor_scale(noise, sigmas[0]);
-            ggml_tensor_add(x, noise);
-        }
+        // x = x * sigmas[0]
+        ggml_tensor_scale(x, sigmas[0]);
 
         // denoise wrapper
         struct ggml_tensor* out_cond   = ggml_dup_tensor(work_ctx, x);
@@ -731,30 +714,17 @@ public:
 
             std::vector<struct ggml_tensor*> controls;
 
-            if (start_merge_step == -1 || step <= start_merge_step) {
-                // cond
-                diffusion_model->compute(n_threads,
-                                         noised_input,
-                                         timesteps,
-                                         c,
-                                         c_concat,
-                                         c_vector,
-                                         -1,
-                                         controls,
-                                         control_strength,
-                                         &out_cond);
-            } else {
-                diffusion_model->compute(n_threads,
-                                         noised_input,
-                                         timesteps,
-                                         c_id,
-                                         c_concat,
-                                         c_vec_id,
-                                         -1,
-                                         controls,
-                                         control_strength,
-                                         &out_cond);
-            }
+            // cond
+            diffusion_model->compute(n_threads,
+                                     noised_input,
+                                     timesteps,
+                                     c,
+                                     NULL,
+                                     c_vector,
+                                     -1,
+                                     controls,
+                                     0.f,
+                                     &out_cond);
 
             float* negative_data = NULL;
             if (has_unconditioned) {
@@ -763,11 +733,11 @@ public:
                                          noised_input,
                                          timesteps,
                                          uc,
-                                         uc_concat,
+                                         NULL,
                                          uc_vector,
                                          -1,
                                          controls,
-                                         control_strength,
+                                         0.f,
                                          &out_uncond);
                 negative_data = (float*)out_uncond->data;
             }
@@ -903,10 +873,8 @@ struct sd_ctx_t {
 sd_ctx_t* new_sd_ctx(const char* model_path_c_str,
                      const char* vae_path_c_str,
                      const char* taesd_path_c_str,
-                     const char* control_net_path_c_str,
                      const char* lora_model_dir_c_str,
                      const char* embed_dir_c_str,
-                     const char* id_embed_dir_c_str,
                      bool vae_decode_only,
                      bool vae_tiling,
                      bool free_params_immediately,
@@ -915,7 +883,6 @@ sd_ctx_t* new_sd_ctx(const char* model_path_c_str,
                      enum rng_type_t rng_type,
                      enum scheduler_t s,
                      bool keep_clip_on_cpu,
-                     bool keep_control_net_cpu,
                      bool keep_vae_on_cpu,
                      bool enable_mmap) {
     sd_ctx_t* sd_ctx = (sd_ctx_t*)malloc(sizeof(sd_ctx_t));
@@ -925,9 +892,7 @@ sd_ctx_t* new_sd_ctx(const char* model_path_c_str,
     std::string model_path(model_path_c_str);
     std::string vae_path(vae_path_c_str);
     std::string taesd_path(taesd_path_c_str);
-    std::string control_net_path(control_net_path_c_str);
     std::string embd_path(embed_dir_c_str);
-    std::string id_embd_path(id_embed_dir_c_str);
     std::string lora_model_dir(lora_model_dir_c_str);
 
     sd_ctx->sd = new StableDiffusionGGML(n_threads,
@@ -942,15 +907,12 @@ sd_ctx_t* new_sd_ctx(const char* model_path_c_str,
 
     if (!sd_ctx->sd->load_from_file(model_path,
                                     vae_path,
-                                    control_net_path,
                                     embd_path,
-                                    id_embd_path,
                                     taesd_path,
                                     vae_tiling,
                                     (ggml_type)wtype,
                                     s,
                                     keep_clip_on_cpu,
-                                    keep_control_net_cpu,
                                     keep_vae_on_cpu,
                                     enable_mmap)) {
         delete sd_ctx->sd;
@@ -971,7 +933,6 @@ void free_sd_ctx(sd_ctx_t* sd_ctx) {
 
 sd_image_t* generate_image(sd_ctx_t* sd_ctx,
                            struct ggml_context* work_ctx,
-                           ggml_tensor* init_latent,
                            std::string prompt,
                            std::string negative_prompt,
                            int clip_skip,
@@ -982,11 +943,6 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
                            const std::vector<float>& sigmas,
                            int64_t seed,
                            int batch_count,
-                           const sd_image_t* control_cond,
-                           float control_strength,
-                           float style_ratio,
-                           bool normalize_input,
-                           std::string input_id_images_path,
                            float eta) {
     if (seed < 0) {
         // Generally, when using the provided command line, the seed is always >0.
@@ -995,7 +951,6 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
         srand((int)time(NULL));
         seed = rand();
     }
-
     int sample_steps = sigmas.size() - 1;
 
     // Apply lora
@@ -1013,10 +968,6 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
     sd_ctx->sd->apply_loras(lora_f2m, sd_ctx->sd->enable_mmap);
     int64_t t1 = ggml_time_ms();
     LOG_INFO("apply_loras completed, taking %.2fs", (t1 - t0) * 1.0f / 1000);
-
-    // Photo Maker
-    ggml_tensor* prompts_embeds        = NULL;
-    ggml_tensor* pooled_prompts_embeds = NULL;
 
     // Get learned condition
     t0                    = ggml_time_ms();
@@ -1044,10 +995,6 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
 
     // Control net hint
     struct ggml_tensor* image_hint = NULL;
-    if (control_cond != NULL) {
-        image_hint = ggml_new_tensor_4d(work_ctx, GGML_TYPE_F32, width, height, 3, 1);
-        sd_image_to_tensor(control_cond->data, image_hint);
-    }
 
     // Sample
     std::vector<struct ggml_tensor*> final_latents;  // collect latents to decode
@@ -1061,36 +1008,20 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
         LOG_INFO("generating image: %i/%i - seed %" PRId64, b + 1, batch_count, cur_seed);
 
         sd_ctx->sd->rng->manual_seed(cur_seed);
-        struct ggml_tensor* x_t   = NULL;
-        struct ggml_tensor* noise = NULL;
-        if (init_latent == NULL) {
-            x_t = ggml_new_tensor_4d(work_ctx, GGML_TYPE_F32, W, H, C, 1);
-            ggml_tensor_set_f32_randn(x_t, sd_ctx->sd->rng);
-        } else {
-            x_t   = init_latent;
-            noise = ggml_new_tensor_4d(work_ctx, GGML_TYPE_F32, W, H, C, 1);
-            ggml_tensor_set_f32_randn(noise, sd_ctx->sd->rng);
-        }
-        int start_merge_step = -1;
+        struct ggml_tensor* x_t = ggml_new_tensor_4d(work_ctx, GGML_TYPE_F32, W, H, C, 1);
+        ggml_tensor_set_f32_randn(x_t, sd_ctx->sd->rng);
 
         struct ggml_tensor* x_0 = sd_ctx->sd->sample(work_ctx,
                                                      x_t,
-                                                     noise,
                                                      c,
-                                                     NULL,
                                                      c_vector,
                                                      uc,
-                                                     NULL,
                                                      uc_vector,
                                                      image_hint,
-                                                     control_strength,
                                                      cfg_scale,
                                                      cfg_scale,
                                                      sample_method,
                                                      sigmas,
-                                                     start_merge_step,
-                                                     prompts_embeds,
-                                                     pooled_prompts_embeds,
                                                      eta);
         // struct ggml_tensor* x_0 = load_tensor_from_file(ctx, "samples_ddim.bin");
         // print_ggml_tensor(x_0);
@@ -1137,7 +1068,6 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
         result_images[i].data    = sd_tensor_to_image(decoded_images[i]);
     }
     ggml_free(work_ctx);
-
     return result_images;
 }
 
@@ -1152,38 +1082,28 @@ sd_image_t* txt2img(sd_ctx_t* sd_ctx,
                     int sample_steps,
                     int64_t seed,
                     int batch_count,
-                    const sd_image_t* control_cond,
-                    float control_strength,
-                    float style_ratio,
-                    bool normalize_input,
-                    const char* input_id_images_path_c_str,
                     float eta) {
     LOG_DEBUG("txt2img %dx%d", width, height);
     if (sd_ctx == NULL) {
         return NULL;
     }
-
     struct ggml_init_params params;
     params.mem_size = static_cast<size_t>(10 * 1024 * 1024);  // 10 MB
     params.mem_size += width * height * 3 * sizeof(float);
     params.mem_size *= batch_count;
     params.mem_buffer = NULL;
     params.no_alloc   = false;
-    // LOG_DEBUG("mem_size %u ", params.mem_size);
 
+    // LOG_DEBUG("mem_size %u ", params.mem_size);
     struct ggml_context* work_ctx = ggml_init(params);
     if (!work_ctx) {
         LOG_ERROR("ggml_init() failed");
         return NULL;
     }
-
-    size_t t0 = ggml_time_ms();
-
+    size_t t0                 = ggml_time_ms();
     std::vector<float> sigmas = sd_ctx->sd->denoiser->get_sigmas(sample_steps);
-
     sd_image_t* result_images = generate_image(sd_ctx,
                                                work_ctx,
-                                               NULL,
                                                prompt_c_str,
                                                negative_prompt_c_str,
                                                clip_skip,
@@ -1194,16 +1114,8 @@ sd_image_t* txt2img(sd_ctx_t* sd_ctx,
                                                sigmas,
                                                seed,
                                                batch_count,
-                                               control_cond,
-                                               control_strength,
-                                               style_ratio,
-                                               normalize_input,
-                                               input_id_images_path_c_str,
                                                eta);
-
-    size_t t1 = ggml_time_ms();
-
+    size_t t1                 = ggml_time_ms();
     LOG_INFO("txt2img completed in %.2fs", (t1 - t0) * 1.0f / 1000);
-
     return result_images;
 }
