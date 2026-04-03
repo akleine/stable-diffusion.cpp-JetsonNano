@@ -428,7 +428,7 @@ public:
         ggml_set_f32(timesteps, 999);
         int64_t t0              = ggml_time_ms();
         struct ggml_tensor* out = ggml_dup_tensor(work_ctx, x_t);
-        diffusion_model->compute(n_threads, x_t, timesteps, c, NULL, NULL, -1, {}, 0.f, &out);
+        diffusion_model->compute(n_threads, x_t, timesteps, c, NULL, NULL, &out);
         diffusion_model->free_compute_buffer();
 
         double result  = 0.f;
@@ -645,7 +645,6 @@ public:
                         ggml_tensor* c_vector,
                         ggml_tensor* uc,
                         ggml_tensor* uc_vector,
-                        ggml_tensor* control_hint,
                         float min_cfg,
                         float cfg_scale,
                         sample_method_t method,
@@ -721,9 +720,6 @@ public:
                                      c,
                                      NULL,
                                      c_vector,
-                                     -1,
-                                     controls,
-                                     0.f,
                                      &out_cond);
 
             float* negative_data = NULL;
@@ -735,9 +731,6 @@ public:
                                          uc,
                                          NULL,
                                          uc_vector,
-                                         -1,
-                                         controls,
-                                         0.f,
                                          &out_uncond);
                 negative_data = (float*)out_uncond->data;
             }
@@ -1017,7 +1010,6 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
                                                      c_vector,
                                                      uc,
                                                      uc_vector,
-                                                     image_hint,
                                                      cfg_scale,
                                                      cfg_scale,
                                                      sample_method,

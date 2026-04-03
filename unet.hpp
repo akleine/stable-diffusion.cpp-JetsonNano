@@ -464,18 +464,15 @@ struct UNetModel : public GGMLModule {
                  struct ggml_tensor* context,
                  struct ggml_tensor* c_concat,
                  struct ggml_tensor* y,
-                 int num_video_frames                      = -1,
-                 std::vector<struct ggml_tensor*> controls = {},
-                 float control_strength                    = 0.f,
-                 struct ggml_tensor** output               = NULL,
-                 struct ggml_context* output_ctx           = NULL) {
+                 struct ggml_tensor** output     = NULL,
+                 struct ggml_context* output_ctx = NULL) {
         // x: [N, in_channels, h, w]
         // timesteps: [N, ]
         // context: [N, max_position, hidden_size]([N, 77, 768]) or [1, max_position, hidden_size]
         // c_concat: [N, in_channels, h, w] or [1, in_channels, h, w]
         // y: [N, adm_in_channels] or [1, adm_in_channels]
         auto get_graph = [&]() -> struct ggml_cgraph* {
-            return build_graph(x, timesteps, context, c_concat, y, num_video_frames, controls, control_strength);
+            return build_graph(x, timesteps, context, c_concat, y);
         };
 
         GGMLModule::compute(get_graph, n_threads, false, output, output_ctx);
@@ -514,7 +511,7 @@ struct UNetModel : public GGMLModule {
             struct ggml_tensor* out = NULL;
 
             int t0 = ggml_time_ms();
-            compute(8, x, timesteps, context, NULL, y, num_video_frames, {}, 0.f, &out, work_ctx);
+            compute(8, x, timesteps, context, NULL, y, &out, work_ctx);
             int t1 = ggml_time_ms();
 
             print_ggml_tensor(out);
