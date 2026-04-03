@@ -10,13 +10,13 @@ Example:  _"a relaxed nice cat, full SD photo"_
 
 ## About sd.cpp
 
-If you never heard about sd.cpp, read first the leejet's [current README](https://github.com/leejet/stable-diffusion.cpp/blob/master/README.md) file.
-also please read about the [commit](https://github.com/leejet/stable-diffusion.cpp/blob/e1384de/README.md) this repository is built on.
+If you never heard about sd.cpp, please read at first about leejet's [current sd.cpp](https://github.com/leejet/stable-diffusion.cpp) .
+Also read about the [sd.cpp commit](https://github.com/leejet/stable-diffusion.cpp/blob/e1384de/README.md) this repository is built on.
 
 
 ## About this special fork for the Jetson Nano
 
-Later sd.cpp (https://github.com/leejet/stable-diffusion.cpp) commits require a more up-to-date NVCC compiler, CUDA Toolkit 11+, and improved GPU capabilities, which the Jetson's NVIDIA Tegra X1 lacks. The highest CUDA version supported on the Jetson Nano is 10.2. This fork is based on leejet's commit #e1384de (https://github.com/leejet/stable-diffusion.cpp/tree/e1384de), the last in a long series of usable commits. That's why this project was started. It can be easily compiled using the ```CUDA``` option out of the box on the Jetson Nano, no patches are needed. Many thanks for this excellent work! For detailed compilation instructions, see below.
+Later sd.cpp (https://github.com/leejet/stable-diffusion.cpp) commits require a more up-to-date NVCC compiler, CUDA Toolkit 11+, and improved GPU capabilities, which the Jetson's NVIDIA Tegra X1 lacks. The highest CUDA version supported on the Jetson Nano is 10.2. The commit #e1384de (https://github.com/leejet/stable-diffusion.cpp/tree/e1384de) is the last in a long series of usable commits, and this fork is built on top. It can be easily compiled using the ```CUDA``` option out of the box on the Jetson Nano, no patches are needed. Many thanks for this excellent work! For detailed compilation instructions, see below.
 
 **Many commits from the newer sd.cpp versions have been backported to this particular fork.**  Most of these commits concern the operation of SD1/2.x models and some tiny derivatives. Due to the limited shared memory in the Jetson Nano, the inpainting function and the features of more advanced models (SD3, Flux, Z-Image, etc.) could not be ported. However, this fork provides everything you need to get started with sd.cpp on the Jetson Nano. Some differences between the sd.cpp versions are:
 |                 |   leejet master  |  leejet #e1384de |   Jetson Nano    |

@@ -75,9 +75,7 @@ class CLIPTokenizer {
 private:
     SDVersion version = VERSION_SD1;
     std::map<int, std::u32string> byte_encoder;
-    std::map<std::u32string, int> byte_decoder;
     std::map<std::u32string, int> encoder;
-    std::map<int, std::u32string> decoder;
     std::map<std::pair<std::u32string, std::u32string>, int> bpe_ranks;
     std::regex pat;
     int encoder_len;
@@ -124,9 +122,6 @@ public:
         auto byte_unicode_pairs = bytes_to_unicode();
         // printf("byte_unicode_pairs have %lu pairs \n", byte_unicode_pairs.size());
         byte_encoder = std::map<int, std::u32string>(byte_unicode_pairs.begin(), byte_unicode_pairs.end());
-        for (auto& pair : byte_unicode_pairs) {
-            byte_decoder[pair.second] = pair.first;
-        }
         // for (auto & pair: byte_unicode_pairs) {
         //     std::cout << pair.first << ": " << pair.second << std::endl;
         // }
@@ -164,18 +159,9 @@ public:
         LOG_DEBUG("vocab size: %llu", vocab.size());
         int i = 0;
         for (const auto& token : vocab) {
-            encoder[token] = i;
-            decoder[i]     = token;
-            i++;
+            encoder[token] = i++;
         }
         encoder_len = i;
-
-        auto it = encoder.find(utf8_to_utf32("img</w>"));
-        if (it != encoder.end()) {
-            LOG_DEBUG(" trigger word img already in vocab");
-        } else {
-            LOG_DEBUG(" trigger word img not in vocab yet");
-        }
 
         int rank = 0;
         for (const auto& merge : merge_pairs) {
@@ -183,16 +169,6 @@ public:
         }
         bpe_len = rank;
     };
-
-    void add_token(const std::string& text) {
-        std::u32string token = utf8_to_utf32(text);
-        auto it              = encoder.find(token);
-        if (it != encoder.end()) {
-            encoder[token]       = encoder_len;
-            decoder[encoder_len] = token;
-            encoder_len++;
-        }
-    }
 
     std::u32string bpe(const std::u32string& token) {
         std::vector<std::u32string> word;
@@ -293,30 +269,6 @@ public:
         }
 
         return tokens;
-    }
-
-    std::string decode(const std::vector<int>& tokens) {
-        std::string text = "";
-        for (int t : tokens) {
-            if (t == 49406 || t == 49407)
-                continue;
-            std::u32string ts = decoder[t];
-            // printf("%d, %s \n", t,  utf32_to_utf8(ts).c_str());
-            std::string s = utf32_to_utf8(ts);
-            if (s.length() >= 4 && ends_with(s, "</w>")) {
-                text += " " + s.replace(s.length() - 4, s.length() - 1, "");
-            } else {
-                text += " " + s;
-            }
-        }
-        // std::vector<unsigned char> bytes;
-        // for (auto c : text){
-        //     bytes.push_back(byte_decoder[c]);
-        // }
-
-        // std::string s((char *)bytes.data());
-        // std::string s = "";
-        return trim(text);
     }
 
     std::vector<int> encode(std::string text, on_new_token_cb_t on_new_token_cb) {
@@ -1098,47 +1050,6 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
         return tokenize(text, text_model.n_token, padding);
     }
 
-    std::tuple<std::vector<int>, std::vector<float>, std::vector<bool>>
-    tokenize_with_trigger_token(std::string text,
-                                int num_input_imgs,
-                                int32_t image_token,
-                                bool padding = false) {
-        return tokenize_with_trigger_token(text, num_input_imgs, image_token,
-                                           text_model.n_token, padding);
-    }
-
-    std::vector<int> convert_token_to_id(std::string text) {
-        auto on_new_token_cb = [&](std::string& str, std::vector<int32_t>& bpe_tokens) -> bool {
-            size_t word_end       = str.find(",");
-            std::string embd_name = word_end == std::string::npos ? str : str.substr(0, word_end);
-            embd_name             = trim(embd_name);
-            std::string embd_path = get_full_path(embd_dir, embd_name + ".gguf");
-            if (embd_path.size() == 0) {
-                embd_path = get_full_path(embd_dir, embd_name + ".safetensors");
-            }
-            if (embd_path.size() == 0) {
-                embd_path = get_full_path(embd_dir, embd_name + ".pt");
-            }
-            if (embd_path.size() > 0) {
-                if (load_embedding(embd_name, embd_path, bpe_tokens)) {
-                    if (word_end != std::string::npos) {
-                        str = str.substr(word_end);
-                    } else {
-                        str = "";
-                    }
-                    return true;
-                }
-            }
-            return false;
-        };
-        std::vector<int> curr_tokens = tokenizer.encode(text, on_new_token_cb);
-        return curr_tokens;
-    }
-
-    std::string decode(const std::vector<int>& tokens) {
-        return tokenizer.decode(tokens);
-    }
-
     void pad_tokens(std::vector<int>& tokens,
                     std::vector<float>& weights,
                     size_t max_length = 0,
@@ -1188,115 +1099,6 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
         }
     }
 
-    std::tuple<std::vector<int>, std::vector<float>, std::vector<bool>>
-    tokenize_with_trigger_token(std::string text,
-                                int num_input_imgs,
-                                int32_t image_token,
-                                size_t max_length = 0,
-                                bool padding      = false) {
-        auto parsed_attention = parse_prompt_attention(text);
-
-        {
-            std::stringstream ss;
-            ss << "[";
-            for (const auto& item : parsed_attention) {
-                ss << "['" << item.first << "', " << item.second << "], ";
-            }
-            ss << "]";
-            LOG_DEBUG("parse '%s' to %s", text.c_str(), ss.str().c_str());
-        }
-
-        auto on_new_token_cb = [&](std::string& str, std::vector<int32_t>& bpe_tokens) -> bool {
-            size_t word_end       = str.find(",");
-            std::string embd_name = word_end == std::string::npos ? str : str.substr(0, word_end);
-            embd_name             = trim(embd_name);
-            std::string embd_path = get_full_path(embd_dir, embd_name + ".pt");
-            if (embd_path.size() == 0) {
-                embd_path = get_full_path(embd_dir, embd_name + ".ckpt");
-            }
-            if (embd_path.size() == 0) {
-                embd_path = get_full_path(embd_dir, embd_name + ".safetensors");
-            }
-            if (embd_path.size() > 0) {
-                if (load_embedding(embd_name, embd_path, bpe_tokens)) {
-                    if (word_end != std::string::npos) {
-                        str = str.substr(word_end);
-                    } else {
-                        str = "";
-                    }
-                    return true;
-                }
-            }
-            return false;
-        };
-
-        std::vector<int> tokens;
-        std::vector<float> weights;
-        std::vector<bool> class_token_mask;
-        int32_t class_idx = -1, tokens_acc = 0;
-        for (const auto& item : parsed_attention) {
-            std::vector<int> class_token_index;
-            std::vector<int> clean_input_ids;
-            const std::string& curr_text = item.first;
-            float curr_weight            = item.second;
-            // printf(" %s: %f \n", curr_text.c_str(), curr_weight);
-            std::vector<int> curr_tokens = tokenizer.encode(curr_text, on_new_token_cb);
-            int32_t clean_index          = 0;
-            for (uint32_t i = 0; i < curr_tokens.size(); i++) {
-                int token_id = curr_tokens[i];
-                if (token_id == image_token)
-                    class_token_index.push_back(clean_index - 1);
-                else {
-                    clean_input_ids.push_back(token_id);
-                    clean_index++;
-                }
-            }
-            // GGML_ASSERT(class_token_index.size() == 1); // PhotoMaker currently does not support multiple
-            //     trigger words in a single prompt.
-            if (class_token_index.size() == 1) {
-                // Expand the class word token and corresponding mask
-                int class_token = clean_input_ids[class_token_index[0]];
-                class_idx       = tokens_acc + class_token_index[0];
-                std::vector<int> clean_input_ids_tmp;
-                for (uint32_t i = 0; i < class_token_index[0]; i++)
-                    clean_input_ids_tmp.push_back(clean_input_ids[i]);
-                for (uint32_t i = 0; i < num_input_imgs; i++)
-                    clean_input_ids_tmp.push_back(class_token);
-                for (uint32_t i = class_token_index[0] + 1; i < clean_input_ids.size(); i++)
-                    clean_input_ids_tmp.push_back(clean_input_ids[i]);
-                clean_input_ids.clear();
-                clean_input_ids = clean_input_ids_tmp;
-            }
-            tokens_acc += clean_index;
-            tokens.insert(tokens.end(), clean_input_ids.begin(), clean_input_ids.end());
-            weights.insert(weights.end(), clean_input_ids.size(), curr_weight);
-        }
-        tokens.insert(tokens.begin(), BOS_TOKEN_ID);
-        weights.insert(weights.begin(), 1.0);
-
-        pad_tokens(tokens, weights, max_length, padding);
-
-        for (uint32_t i = 0; i < tokens.size(); i++) {
-            if (class_idx + 1 <= i && i < class_idx + 1 + num_input_imgs)
-                class_token_mask.push_back(true);
-            else
-                class_token_mask.push_back(false);
-        }
-
-        // printf("[");
-        // for (int i = 0; i < tokens.size(); i++) {
-        //     printf("%d, ", class_token_mask[i] ? 1 : 0);
-        // }
-        // printf("]\n");
-
-        // for (int i = 0; i < tokens.size(); i++) {
-        //     std::cout << tokens[i] << ":" << weights[i] << ", ";
-        // }
-        // std::cout << std::endl;
-
-        return std::make_tuple(tokens, weights, class_token_mask);
-    }
-
     std::pair<std::vector<int>, std::vector<float>> tokenize(std::string text,
                                                              size_t max_length = 0,
                                                              bool padding      = false) {
@@ -1316,12 +1118,12 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
             size_t word_end       = str.find(",");
             std::string embd_name = word_end == std::string::npos ? str : str.substr(0, word_end);
             embd_name             = trim(embd_name);
-            std::string embd_path = get_full_path(embd_dir, embd_name + ".pt");
-            if (embd_path.size() == 0) {
-                embd_path = get_full_path(embd_dir, embd_name + ".ckpt");
-            }
+            std::string embd_path = get_full_path(embd_dir, embd_name + ".gguf");
             if (embd_path.size() == 0) {
                 embd_path = get_full_path(embd_dir, embd_name + ".safetensors");
+            }
+            if (embd_path.size() == 0) {
+                embd_path = get_full_path(embd_dir, embd_name + ".pt");
             }
             if (embd_path.size() > 0) {
                 if (load_embedding(embd_name, embd_path, bpe_tokens)) {
