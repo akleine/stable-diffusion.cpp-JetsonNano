@@ -133,7 +133,7 @@ public:
             merges.push_back(merges_utf32_str.substr(start, pos - start));
             start = pos + 1;
         }
-        // LOG_DEBUG("merges size %llu", merges.size());
+        // LOG_DEBUG("merges size %zu", merges.size());
         GGML_ASSERT(merges.size() == 48895);
         merges = std::vector<std::u32string>(merges.begin() + 1, merges.end());
         std::vector<std::pair<std::u32string, std::u32string>> merge_pairs;
@@ -156,7 +156,7 @@ public:
         }
         vocab.push_back(utf8_to_utf32("<|startoftext|>"));
         vocab.push_back(utf8_to_utf32("<|endoftext|>"));
-        LOG_DEBUG("vocab size: %llu", vocab.size());
+        LOG_DEBUG("vocab size: %zu", vocab.size());
         int i = 0;
         for (const auto& token : vocab) {
             encoder[token] = i++;
@@ -1060,7 +1060,7 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
                 n = 1;
             }
             size_t length = max_length * n;
-            LOG_DEBUG("token length: %llu", length);
+            LOG_DEBUG("token length: %zu", length);
             std::vector<int> new_tokens;
             std::vector<float> new_weights;
             new_tokens.push_back(BOS_TOKEN_ID);

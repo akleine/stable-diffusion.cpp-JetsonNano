@@ -141,7 +141,6 @@ public:
                         bool clip_on_cpu,
                         bool vae_on_cpu,
                         bool enable_mmap_) {
-        use_tiny_autoencoder = taesd_path.size() > 0;
 #ifdef SD_USE_CUDA
         LOG_DEBUG("Using CUDA backend");
         backend = ggml_backend_cuda_init(0);
@@ -195,6 +194,13 @@ public:
         LOG_INFO("Stable Diffusion weight type: %s", ggml_type_name(model_data_type));
         LOG_DEBUG("ggml tensor size = %d bytes", (int)sizeof(ggml_tensor));
 
+        if (taesd_path.size() > 0) {
+            if (version == VERSION_SDXS || version == VERSION_SDXS_09) {
+                LOG_WARN("SDXS version is using own tiny autoencoder");
+            } else {
+                use_tiny_autoencoder = true;
+            }
+        }
         if (sd_version_is_sdxl(version)) {
             scale_factor = 0.13025f;
             if (vae_path.size() == 0 && taesd_path.size() == 0) {
@@ -242,6 +248,7 @@ public:
                     tae_first_stage->alloc_params_buffer();
                     tae_first_stage->get_param_tensors(tensors, "first_stage_model");
                 }
+                vae_backend = backend;
             }
             // first_stage_model->get_param_tensors(tensors, "first_stage_model.");
 
@@ -1026,7 +1033,7 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
         sd_ctx->sd->diffusion_model->free_params_buffer();
     }
     int64_t t3 = ggml_time_ms();
-    LOG_INFO("generating %" PRId64 " latent images completed, taking %.2fs", final_latents.size(), (t3 - t1) * 1.0f / 1000);
+    LOG_INFO("generating %zu latent images completed, taking %.2fs", final_latents.size(), (t3 - t1) * 1.0f / 1000);
 
     // Decode to image
     LOG_INFO("decoding %zu latents", final_latents.size());
@@ -1039,7 +1046,7 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
             decoded_images.push_back(img);
         }
         int64_t t2 = ggml_time_ms();
-        LOG_INFO("latent %" PRId64 " decoded, taking %.2fs", i + 1, (t2 - t1) * 1.0f / 1000);
+        LOG_INFO("latent %zu decoded, taking %.2fs", i + 1, (t2 - t1) * 1.0f / 1000);
     }
 
     int64_t t4 = ggml_time_ms();
