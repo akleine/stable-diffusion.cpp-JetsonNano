@@ -332,6 +332,10 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 break;
             }
             params.clip_skip = std::stoi(argv[i]);
+        } else if (arg == "--diffusion-fa") {
+            ;  // do nothing (currently flash attention is compiled in [or not])
+        } else if (arg == "--fa") {
+            ;  // do nothing (see above at --diffusion-fa)
         } else if (arg == "--mmap") {
             params.enable_mmap = true;
         } else if (arg == "--vae-tiling") {
