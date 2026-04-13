@@ -1090,7 +1090,7 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
 
             if (padding) {
                 int pad_token_id = PAD_TOKEN_ID;
-                if (sd_version_is_sd2) {
+                if (sd_version_is_sd2(version)) {
                     pad_token_id = 0;
                 }
                 tokens.insert(tokens.end(), length - tokens.size(), pad_token_id);

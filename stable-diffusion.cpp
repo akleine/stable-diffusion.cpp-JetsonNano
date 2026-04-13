@@ -351,7 +351,8 @@ public:
             if (is_using_v_parameterization_for_sd2(ctx)) {
                 is_using_v_parameterization = true;
             }
-        } else if (is_using_v_parameterization) {
+        }
+        if (is_using_v_parameterization) {
             denoiser = std::make_shared<CompVisVDenoiser>();
             LOG_INFO("running in v-prediction mode");
         } else {
