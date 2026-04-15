@@ -13,10 +13,6 @@
 #define STB_IMAGE_WRITE_STATIC
 #include "stb_image_write.h"
 
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
-#define STB_IMAGE_RESIZE_STATIC
-#include "stb_image_resize.h"
-
 const char* rng_type_to_str[] = {
     "std_default",
     "cuda",
