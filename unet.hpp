@@ -257,7 +257,11 @@ public:
             if (c_concat->ne[3] != x->ne[3]) {
                 c_concat = ggml_repeat(ctx, c_concat, x);
             }
+#ifndef SD_USE_NEW_GGML
             x = ggml_concat(ctx, x, c_concat);
+#else
+            x = ggml_concat(ctx, x, c_concat, 2);
+#endif
         }
 
         if (y != NULL) {
@@ -358,7 +362,11 @@ public:
                     control_offset--;
                 }
 
+#ifndef SD_USE_NEW_GGML
                 h = ggml_concat(ctx, h, h_skip);
+#else
+                h = ggml_concat(ctx, h, h_skip, 2);
+#endif
 
                 std::string name = "output_blocks." + std::to_string(output_block_idx) + ".0";
 

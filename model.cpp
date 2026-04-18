@@ -11,10 +11,15 @@
 #include "util.h"
 #include "vocab.hpp"
 
+#ifndef SD_USE_NEW_GGML
 #include "ggml/ggml-alloc.h"
 #include "ggml/ggml-backend.h"
 #include "ggml/ggml.h"
-
+#else
+#include "ggml-alloc.h"
+#include "ggml-backend.h"
+#include "ggml.h"
+#endif
 #include "stable-diffusion.h"
 
 #ifdef SD_USE_METAL
@@ -590,7 +595,11 @@ void convert_tensor(void* src,
             int64_t hist[16];
             std::vector<float> imatrix(n_per_row, 1.0f);  // dummy importance matrix
             const float* im = imatrix.data();
+#ifndef SD_USE_NEW_GGML
             ggml_quantize_chunk(dst_type, (float*)src, dst, 0, nrows, n_per_row, hist, im);
+#else
+            ggml_quantize_chunk(dst_type, (float*)src, dst, 0, nrows, n_per_row, im);
+#endif
         }
     } else if (dst_type == GGML_TYPE_F32) {
         if (src_type == GGML_TYPE_F16) {
@@ -621,7 +630,12 @@ void convert_tensor(void* src,
             int64_t hist[16];
             std::vector<float> imatrix(n_per_row, 1.0f);  // dummy importance matrix
             const float* im = imatrix.data();
+
+#ifndef SD_USE_NEW_GGML
             ggml_quantize_chunk(dst_type, (float*)src_data_f32, dst, 0, nrows, n_per_row, hist, im);
+#else
+            ggml_quantize_chunk(dst_type, (float*)src_data_f32, dst, 0, nrows, n_per_row, im);
+#endif
         }
     }
 }

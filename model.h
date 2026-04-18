@@ -10,8 +10,13 @@
 #include <tuple>
 #include <vector>
 
+#ifndef SD_USE_NEW_GGML
 #include "ggml/ggml-backend.h"
 #include "ggml/ggml.h"
+#else
+#include "ggml-backend.h"
+#include "ggml.h"
+#endif
 #include "json.hpp"
 #include "zip.h"
 
