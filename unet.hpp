@@ -486,46 +486,6 @@ struct UNetModel : public GGMLModule {
         GGMLModule::compute(get_graph, n_threads, false, output, output_ctx);
     }
 
-    void test() {
-        struct ggml_init_params params;
-        params.mem_size   = static_cast<size_t>(10 * 1024 * 1024);  // 10 MB
-        params.mem_buffer = NULL;
-        params.no_alloc   = false;
-
-        struct ggml_context* work_ctx = ggml_init(params);
-        GGML_ASSERT(work_ctx != NULL);
-
-        {
-            // CPU, num_video_frames = 1, x{num_video_frames, 8, 8, 8}: Pass
-            // CUDA, num_video_frames = 1, x{num_video_frames, 8, 8, 8}: Pass
-            // CPU, num_video_frames = 3, x{num_video_frames, 8, 8, 8}: Wrong result
-            // CUDA, num_video_frames = 3, x{num_video_frames, 8, 8, 8}: nan
-            int num_video_frames = 3;
-
-            auto x = ggml_new_tensor_4d(work_ctx, GGML_TYPE_F32, 8, 8, 8, num_video_frames);
-            std::vector<float> timesteps_vec(num_video_frames, 999.f);
-            auto timesteps = vector_to_ggml_tensor(work_ctx, timesteps_vec);
-            ggml_set_f32(x, 0.5f);
-            // print_ggml_tensor(x);
-
-            auto context = ggml_new_tensor_3d(work_ctx, GGML_TYPE_F32, 1024, 1, num_video_frames);
-            ggml_set_f32(context, 0.5f);
-            // print_ggml_tensor(context);
-
-            auto y = ggml_new_tensor_2d(work_ctx, GGML_TYPE_F32, 768, num_video_frames);
-            ggml_set_f32(y, 0.5f);
-            // print_ggml_tensor(y);
-
-            struct ggml_tensor* out = NULL;
-
-            int t0 = ggml_time_ms();
-            compute(8, x, timesteps, context, NULL, y, &out, work_ctx);
-            int t1 = ggml_time_ms();
-
-            print_ggml_tensor(out);
-            LOG_DEBUG("unet test done in %dms", t1 - t0);
-        }
-    };
 };
 
 #endif  // __UNET_HPP__
