@@ -416,7 +416,6 @@ struct AutoEncoderKL : public GGMLModule {
         // print_ggml_tensor(z);
         GGMLModule::compute(get_graph, n_threads, false, output, output_ctx);
     }
-
 };
 
 #endif

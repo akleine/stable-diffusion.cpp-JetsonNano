@@ -45,20 +45,20 @@ public:
 
 #ifndef SD_USE_NEW_GGML
         auto x_cat = ggml_concat(ctx, x, x1);
-        auto x2 = lrelu(ctx, conv2->forward(ctx, x_cat));
-        x_cat = ggml_concat(ctx, x_cat, x2);
-        auto x3 = lrelu(ctx, conv3->forward(ctx, x_cat));
-        x_cat = ggml_concat(ctx, x_cat, x3);
-        auto x4 = lrelu(ctx, conv4->forward(ctx, x_cat));
-        x_cat = ggml_concat(ctx, x_cat, x4);
+        auto x2    = lrelu(ctx, conv2->forward(ctx, x_cat));
+        x_cat      = ggml_concat(ctx, x_cat, x2);
+        auto x3    = lrelu(ctx, conv3->forward(ctx, x_cat));
+        x_cat      = ggml_concat(ctx, x_cat, x3);
+        auto x4    = lrelu(ctx, conv4->forward(ctx, x_cat));
+        x_cat      = ggml_concat(ctx, x_cat, x4);
 #else
         auto x_cat = ggml_concat(ctx, x, x1, 2);
-        auto x2 = lrelu(ctx, conv2->forward(ctx, x_cat));
-        x_cat = ggml_concat(ctx, x_cat, x2, 2);
-        auto x3 = lrelu(ctx, conv3->forward(ctx, x_cat));
-        x_cat = ggml_concat(ctx, x_cat, x3, 2);
-        auto x4 = lrelu(ctx, conv4->forward(ctx, x_cat));
-        x_cat = ggml_concat(ctx, x_cat, x4, 2);
+        auto x2    = lrelu(ctx, conv2->forward(ctx, x_cat));
+        x_cat      = ggml_concat(ctx, x_cat, x2, 2);
+        auto x3    = lrelu(ctx, conv3->forward(ctx, x_cat));
+        x_cat      = ggml_concat(ctx, x_cat, x3, 2);
+        auto x4    = lrelu(ctx, conv4->forward(ctx, x_cat));
+        x_cat      = ggml_concat(ctx, x_cat, x4, 2);
 #endif
         auto x5 = conv5->forward(ctx, x_cat);
 

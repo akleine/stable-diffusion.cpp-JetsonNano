@@ -485,7 +485,6 @@ struct UNetModel : public GGMLModule {
 
         GGMLModule::compute(get_graph, n_threads, false, output, output_ctx);
     }
-
 };
 
 #endif  // __UNET_HPP__
