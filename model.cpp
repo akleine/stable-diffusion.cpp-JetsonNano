@@ -606,7 +606,7 @@ void convert_tensor(void* src,
             ggml_fp16_to_fp32_row((ggml_fp16_t*)src, (float*)dst, n);
         } else {
             auto qtype = ggml_internal_get_type_traits(src_type);
-            if (qtype.to_float == NULL) {
+            if (qtype.to_float == nullptr) {
                 throw std::runtime_error(format("type %s unsupported for integer quantization: no dequantization available",
                                                 ggml_type_name(src_type)));
             }
@@ -616,7 +616,7 @@ void convert_tensor(void* src,
         // src_type == GGML_TYPE_F16 => dst_type is quantized
         // src_type is quantized => dst_type == GGML_TYPE_F16 or dst_type is quantized
         auto qtype = ggml_internal_get_type_traits(src_type);
-        if (qtype.to_float == NULL) {
+        if (qtype.to_float == nullptr) {
             throw std::runtime_error(format("type %s unsupported for integer quantization: no dequantization available",
                                             ggml_type_name(src_type)));
         }
@@ -684,7 +684,7 @@ std::map<char, int> unicode_to_byte() {
 
 bool is_zip_file(const std::string& file_path) {
     struct zip_t* zip = zip_open(file_path.c_str(), 0, 'r');
-    if (zip == NULL) {
+    if (zip == nullptr) {
         return false;
     }
     zip_close(zip);
@@ -784,8 +784,8 @@ bool ModelLoader::init_from_gguf_file(const std::string& file_path, const std::s
     file_paths_.push_back(file_path);
     size_t file_index = file_paths_.size() - 1;
 
-    gguf_context* ctx_gguf_ = NULL;
-    ggml_context* ctx_meta_ = NULL;
+    gguf_context* ctx_gguf_ = nullptr;
+    ggml_context* ctx_meta_ = nullptr;
     ctx_gguf_               = gguf_init_from_file(file_path.c_str(), {true, &ctx_meta_});
     if (!ctx_gguf_) {
         LOG_ERROR("failed to open '%s'", file_path.c_str());
@@ -1292,7 +1292,7 @@ bool ModelLoader::init_from_ckpt_file(const std::string& file_path, const std::s
     size_t file_index = file_paths_.size() - 1;
 
     struct zip_t* zip = zip_open(file_path.c_str(), 0, 'r');
-    if (zip == NULL) {
+    if (zip == nullptr) {
         LOG_ERROR("failed to open '%s'", file_path.c_str());
         return false;
     }
@@ -1304,7 +1304,7 @@ bool ModelLoader::init_from_ckpt_file(const std::string& file_path, const std::s
             size_t pos       = name.find("data.pkl");
             if (pos != std::string::npos) {
                 std::string dir = name.substr(0, pos);
-                void* pkl_data  = NULL;
+                void* pkl_data  = nullptr;
                 size_t pkl_size;
                 zip_entry_read(zip, &pkl_data, &pkl_size);
 
@@ -1498,10 +1498,10 @@ bool ModelLoader::load_tensors(on_new_tensor_cb_t on_new_tensor_cb, ggml_backend
                 LOG_WARN("failed to memory-map '%s'", file_path.c_str());
             }
         }
-        struct zip_t* zip = NULL;
+        struct zip_t* zip = nullptr;
         if (is_zip) {
             zip = zip_open(file_path.c_str(), 0, 'r');
-            if (zip == NULL) {
+            if (zip == nullptr) {
                 LOG_ERROR("failed to open zip '%s'", file_path.c_str());
                 return false;
             }
@@ -1511,7 +1511,7 @@ bool ModelLoader::load_tensors(on_new_tensor_cb_t on_new_tensor_cb, ggml_backend
         std::vector<uint8_t> convert_buffer;
 
         auto read_data = [&](const TensorStorage& tensor_storage, char* buf, size_t n) {
-            if (zip != NULL) {
+            if (zip != nullptr) {
                 zip_entry_openbyindex(zip, tensor_storage.index_in_zip);
                 size_t entry_size = zip_entry_size(zip);
                 if (entry_size != n) {
@@ -1546,7 +1546,7 @@ bool ModelLoader::load_tensors(on_new_tensor_cb_t on_new_tensor_cb, ggml_backend
                 ++tensor_count;
                 continue;
             }
-            ggml_tensor* dst_tensor = NULL;
+            ggml_tensor* dst_tensor = nullptr;
 
             success = on_new_tensor_cb(tensor_storage, &dst_tensor);
             if (!success) {
@@ -1554,14 +1554,14 @@ bool ModelLoader::load_tensors(on_new_tensor_cb_t on_new_tensor_cb, ggml_backend
                 break;
             }
 
-            if (dst_tensor == NULL) {
+            if (dst_tensor == nullptr) {
                 ++tensor_count;
                 continue;
             }
 
             size_t nbytes_to_read = tensor_storage.nbytes_to_read();
 
-            if (dst_tensor->buffer == NULL || ggml_backend_buffer_is_host(dst_tensor->buffer)) {
+            if (dst_tensor->buffer == nullptr || ggml_backend_buffer_is_host(dst_tensor->buffer)) {
                 // for the CPU and Metal backend, we can copy directly into the tensor
                 if (tensor_storage.type == dst_tensor->type) {
                     GGML_ASSERT(ggml_nbytes(dst_tensor) == tensor_storage.nbytes());
@@ -1598,6 +1598,10 @@ bool ModelLoader::load_tensors(on_new_tensor_cb_t on_new_tensor_cb, ggml_backend
                 } else {
                     // convert first, then copy to device memory
                     convert_buffer.resize(ggml_nbytes(dst_tensor));
+                    if (convert_buffer.data() == nullptr) {
+                        LOG_ERROR("read tensor data failed: too less memory for conversion");
+                        return false;
+                    }
                     convert_tensor((void*)read_buffer.data(), tensor_storage.type,
                                    (void*)convert_buffer.data(), dst_tensor->type,
                                    (int)tensor_storage.nelements() / (int)tensor_storage.ne[0], (int)tensor_storage.ne[0]);
@@ -1614,7 +1618,7 @@ bool ModelLoader::load_tensors(on_new_tensor_cb_t on_new_tensor_cb, ggml_backend
             t1 = t2;
         }
 
-        if (zip != NULL) {
+        if (zip != nullptr) {
             zip_close(zip);
         }
 
@@ -1709,7 +1713,7 @@ bool ModelLoader::save_to_gguf_file(const std::string& file_path, ggml_type type
     mem_size += tensor_storages.size() * ggml_tensor_overhead();
     mem_size += get_params_mem_size(backend, type);
     LOG_INFO("model tensors mem size: %.2fMB", mem_size / 1024.f / 1024.f);
-    ggml_context* ggml_ctx = ggml_init({mem_size, NULL, false});
+    ggml_context* ggml_ctx = ggml_init({mem_size, nullptr, false});
 
     gguf_context* gguf_ctx = gguf_init_empty();
 
@@ -1726,7 +1730,7 @@ bool ModelLoader::save_to_gguf_file(const std::string& file_path, ggml_type type
         }
 
         ggml_tensor* tensor = ggml_new_tensor(ggml_ctx, tensor_type, tensor_storage.n_dims, tensor_storage.ne);
-        if (tensor == NULL) {
+        if (tensor == nullptr) {
             LOG_ERROR("ggml_new_tensor failed");
             return false;
         }
@@ -1759,7 +1763,7 @@ bool ModelLoader::save_to_gguf_file(const std::string& file_path, ggml_type type
 
 int64_t ModelLoader::get_params_mem_size(ggml_backend_t backend, ggml_type type) {
     size_t alignment = 128;
-    if (backend != NULL) {
+    if (backend != nullptr) {
         alignment = ggml_backend_get_alignment(backend);
     }
     int64_t mem_size = 0;
@@ -1795,7 +1799,7 @@ bool convert(const char* input_path, const char* vae_path, const char* output_pa
         return false;
     }
 
-    if (vae_path != NULL && strlen(vae_path) > 0) {
+    if (vae_path != nullptr && strlen(vae_path) > 0) {
         if (!model_loader.init_from_file(vae_path, "vae.")) {
             LOG_ERROR("init model loader from file failed: '%s'", vae_path);
             return false;

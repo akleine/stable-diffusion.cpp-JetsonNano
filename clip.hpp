@@ -571,7 +571,7 @@ public:
 
         GGML_ASSERT(input_ids->ne[0] == position_embed_weight->ne[1]);
         input_ids            = ggml_reshape_3d(ctx, input_ids, input_ids->ne[0], 1, input_ids->ne[1]);
-        auto token_embedding = ggml_get_rows(ctx, custom_embed_weight != NULL ? custom_embed_weight : token_embed_weight, input_ids);
+        auto token_embedding = ggml_get_rows(ctx, custom_embed_weight != nullptr ? custom_embed_weight : token_embed_weight, input_ids);
         token_embedding      = ggml_reshape_3d(ctx, token_embedding, token_embedding->ne[0], token_embedding->ne[1], token_embedding->ne[3]);
 
         // token_embedding + position_embedding
@@ -743,10 +743,10 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
         }
         struct ggml_init_params params;
         params.mem_size               = 10 * 1024 * 1024;  // max for custom embeddings 10 MB
-        params.mem_buffer             = NULL;
+        params.mem_buffer             = nullptr;
         params.no_alloc               = false;
         struct ggml_context* embd_ctx = ggml_init(params);
-        struct ggml_tensor* embd      = NULL;
+        struct ggml_tensor* embd      = nullptr;
         auto on_load                  = [&](const TensorStorage& tensor_storage, ggml_tensor** dst_tensor) {
             if (tensor_storage.ne[0] != text_model.hidden_size) {
                 LOG_DEBUG("embedding wrong hidden size, got %i, expected %i", tensor_storage.ne[0], text_model.hidden_size);
@@ -756,7 +756,7 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
             *dst_tensor = embd;
             return true;
         };
-        model_loader.load_tensors(on_load, NULL);
+        model_loader.load_tensors(on_load, nullptr);
         readed_embeddings.push_back(embd_name);
         token_embed_custom.resize(token_embed_custom.size() + ggml_nbytes(embd));
         memcpy((void*)(token_embed_custom.data() + num_custom_embeddings * text_model.hidden_size * ggml_type_size(wtype)),
@@ -779,17 +779,17 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
                                 bool return_pooled   = false) {
         size_t N       = input_ids->ne[1];
         size_t n_token = input_ids->ne[0];
-        if (input_ids != NULL && input_ids->ne[0] > text_model.n_token) {
+        if (input_ids != nullptr && input_ids->ne[0] > text_model.n_token) {
             GGML_ASSERT(input_ids->ne[0] % text_model.n_token == 0);
             input_ids = ggml_reshape_2d(ctx, input_ids, text_model.n_token, input_ids->ne[0] / text_model.n_token);
         }
-        if (input_ids2 != NULL && input_ids2->ne[0] > text_model2.n_token) {
+        if (input_ids2 != nullptr && input_ids2->ne[0] > text_model2.n_token) {
             GGML_ASSERT(input_ids2->ne[0] % text_model2.n_token == 0);
             input_ids2 = ggml_reshape_2d(ctx, input_ids2, text_model2.n_token, input_ids2->ne[0] / text_model2.n_token);
         }
 
         if (return_pooled) {
-            return text_model2.forward(ctx, input_ids2, NULL, max_token_idx, return_pooled);
+            return text_model2.forward(ctx, input_ids2, nullptr, max_token_idx, return_pooled);
         }
 
         auto hidden_states = text_model.forward(ctx, input_ids, embeddings);  // [N, n_token, hidden_size]
@@ -803,7 +803,7 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
                                             hidden_states->ne[3]);
             hidden_states = ggml_cont(ctx, ggml_permute(ctx, hidden_states, 2, 0, 1, 3));
 
-            auto hidden_states2 = text_model2.forward(ctx, input_ids2, NULL);  // [N, n_token, hidden_size2]
+            auto hidden_states2 = text_model2.forward(ctx, input_ids2, nullptr);  // [N, n_token, hidden_size2]
             // LOG_DEBUG("hidden_states: %d %d %d %d", hidden_states->ne[0], hidden_states->ne[1], hidden_states->ne[2], hidden_states->ne[3]);
             hidden_states2 = ggml_reshape_4d(ctx,
                                              hidden_states2,
@@ -826,7 +826,7 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
     }
 
     struct ggml_cgraph* build_graph(struct ggml_tensor* input_ids,
-                                    struct ggml_tensor* input_ids2 = NULL,
+                                    struct ggml_tensor* input_ids2 = nullptr,
                                     size_t max_token_idx           = 0,
                                     bool return_pooled             = false) {
         struct ggml_cgraph* gf = ggml_new_graph(compute_ctx);
@@ -836,7 +836,7 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
             input_ids = to_backend(input_ids);
         }
 
-        struct ggml_tensor* embeddings = NULL;
+        struct ggml_tensor* embeddings = nullptr;
 
         if (num_custom_embeddings > 0 && !sd_version_is_sdxl(version)) {
             auto custom_embeddings = ggml_new_tensor_3d(compute_ctx,
@@ -871,7 +871,7 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
                  size_t max_token_idx,
                  bool return_pooled,
                  ggml_tensor** output,
-                 ggml_context* output_ctx = NULL) {
+                 ggml_context* output_ctx = nullptr) {
         auto get_graph = [&]() -> struct ggml_cgraph* {
             return build_graph(input_ids, input_ids2, max_token_idx, return_pooled);
         };

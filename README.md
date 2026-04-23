@@ -37,7 +37,7 @@ Later sd.cpp (https://github.com/leejet/stable-diffusion.cpp) commits require a 
 | CPU rng         |:white_check_mark:|:red_circle:      |:white_check_mark:|
 |tiny U-Net models|:white_check_mark:[^1]|:red_circle:  |:white_check_mark:|
 
-[^1]: tiny U-Net models except SDXS-09, and except "small" and "medium" versions of SD1.X and SD 2.x, see [models section](##Models) .
+[^1]: tiny U-Net models except SDXS-09, and except "small" and "medium" versions of SD1.X and SD 2.x, see [models section](##Models)
 
 
 ## Compiling on the Jetson Nano
@@ -110,6 +110,7 @@ using some other **tiny models** is recommended, e.g. this models of SD1 and SD2
 * https://huggingface.co/nota-ai/bk-sdm-tiny
 * https://huggingface.co/nota-ai/bk-sdm-v2-tiny
 * https://huggingface.co/IDKiro/sdxs-512-dreamshaper
+* https://huggingface.co/IDKiro/sdxs-512-0.9
 
 also using some distilled SDXL models is possible:
 * https://huggingface.co/segmind/Segmind-Vega
@@ -121,7 +122,6 @@ some more models with **small** and **medium** sized U-Nets are implemented *her
 * https://huggingface.co/OFA-Sys/small-stable-diffusion-v0
 * https://huggingface.co/nota-ai/bk-sdm-v2-small
 * https://huggingface.co/nota-ai/bk-sdm-v2-base
-* https://huggingface.co/IDKiro/sdxs-512-0.9
 
 There may be other usable models available online. Naturally, IDKiro's models will be the fastest since they require only one step in U-Net. For example, using sdxs-512-dreamshaper, you can generate a 512x512 PNG image in just 12 seconds! However, each model has its own advantages and limitations. Feel free to explore them all. Keep in mind that since the Jetson Nano has only 4GB of shared RAM (GPU/CPU), running some larger models may not be feasible.
 It is recommended to convert these models into the **safetensors** or preferably into **gguf** format. Creating a .safetensors file involves two steps, please see some hints in https://github.com/leejet/stable-diffusion.cpp/blob/master/docs/distilled_sd.md for detailed instructions.

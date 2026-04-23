@@ -236,8 +236,8 @@ public:
                                 struct ggml_tensor* x,
                                 struct ggml_tensor* timesteps,
                                 struct ggml_tensor* context,
-                                struct ggml_tensor* c_concat              = NULL,
-                                struct ggml_tensor* y                     = NULL,
+                                struct ggml_tensor* c_concat              = nullptr,
+                                struct ggml_tensor* y                     = nullptr,
                                 int num_video_frames                      = -1,
                                 std::vector<struct ggml_tensor*> controls = {},
                                 float control_strength                    = 0.f) {
@@ -247,13 +247,13 @@ public:
         // c_concat: [N, in_channels, h, w] or [1, in_channels, h, w]
         // y: [N, adm_in_channels] or [1, adm_in_channels]
         // return: [N, out_channels, h, w]
-        if (context != NULL) {
+        if (context != nullptr) {
             if (context->ne[2] != x->ne[3]) {
                 context = ggml_repeat(ctx, context, ggml_new_tensor_3d(ctx, GGML_TYPE_F32, context->ne[0], context->ne[1], x->ne[3]));
             }
         }
 
-        if (c_concat != NULL) {
+        if (c_concat != nullptr) {
             if (c_concat->ne[3] != x->ne[3]) {
                 c_concat = ggml_repeat(ctx, c_concat, x);
             }
@@ -264,7 +264,7 @@ public:
 #endif
         }
 
-        if (y != NULL) {
+        if (y != nullptr) {
             if (y->ne[1] != x->ne[3]) {
                 y = ggml_repeat(ctx, y, ggml_new_tensor_2d(ctx, GGML_TYPE_F32, y->ne[0], x->ne[3]));
             }
@@ -284,7 +284,7 @@ public:
         emb      = time_embed_2->forward(ctx, emb);  // [N, time_embed_dim]
 
         // SDXL/SVD
-        if (y != NULL) {
+        if (y != nullptr) {
             auto label_embed_0 = std::dynamic_pointer_cast<Linear>(blocks["label_emb.0.0"]);
             auto label_embed_2 = std::dynamic_pointer_cast<Linear>(blocks["label_emb.0.2"]);
 
@@ -431,8 +431,8 @@ struct UNetModel : public GGMLModule {
     struct ggml_cgraph* build_graph(struct ggml_tensor* x,
                                     struct ggml_tensor* timesteps,
                                     struct ggml_tensor* context,
-                                    struct ggml_tensor* c_concat              = NULL,
-                                    struct ggml_tensor* y                     = NULL,
+                                    struct ggml_tensor* c_concat              = nullptr,
+                                    struct ggml_tensor* y                     = nullptr,
                                     int num_video_frames                      = -1,
                                     std::vector<struct ggml_tensor*> controls = {},
                                     float control_strength                    = 0.f) {
@@ -472,8 +472,8 @@ struct UNetModel : public GGMLModule {
                  struct ggml_tensor* context,
                  struct ggml_tensor* c_concat,
                  struct ggml_tensor* y,
-                 struct ggml_tensor** output     = NULL,
-                 struct ggml_context* output_ctx = NULL) {
+                 struct ggml_tensor** output     = nullptr,
+                 struct ggml_context* output_ctx = nullptr) {
         // x: [N, in_channels, h, w]
         // timesteps: [N, ]
         // context: [N, max_position, hidden_size]([N, 77, 768]) or [1, max_position, hidden_size]

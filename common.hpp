@@ -121,7 +121,7 @@ public:
         }
     }
 
-    virtual struct ggml_tensor* forward(struct ggml_context* ctx, struct ggml_tensor* x, struct ggml_tensor* emb = NULL) {
+    virtual struct ggml_tensor* forward(struct ggml_context* ctx, struct ggml_tensor* x, struct ggml_tensor* emb = nullptr) {
         // For dims==3, we reduce dimension from 5d to 4d by merging h and w, in order not to change ggml
         // [N, c, t, h, w] => [N, c, t, h * w]
         // x: [N, channels, h, w] if dims == 2 else [N, channels, t, h, w]
@@ -131,7 +131,7 @@ public:
         auto out_layers_0 = std::dynamic_pointer_cast<GroupNorm32>(blocks["out_layers.0"]);
         auto out_layers_3 = std::dynamic_pointer_cast<UnaryBlock>(blocks["out_layers.3"]);
 
-        if (emb == NULL) {
+        if (emb == nullptr) {
             GGML_ASSERT(skip_t_emb);
         }
 
@@ -296,7 +296,7 @@ public:
         if (xtra_dim) {
             context->ne[0] = 320;  // reset dim to orig
         }
-        x = ggml_nn_attention_ext(ctx, q, k, v, n_head, NULL, false, false, true);  // [N, n_token, inner_dim]
+        x = ggml_nn_attention_ext(ctx, q, k, v, n_head, nullptr, false, false, true);  // [N, n_token, inner_dim]
 
         x = to_out_0->forward(ctx, x);  // [N, n_token, query_dim]
         return x;

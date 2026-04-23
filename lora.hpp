@@ -101,8 +101,8 @@ struct LoraModel : public GGMLModule {
             std::string alpha_name     = "lora." + k_tensor + ".alpha";
             std::string scale_name     = "lora." + k_tensor + ".scale";
 
-            ggml_tensor* lora_up   = NULL;
-            ggml_tensor* lora_down = NULL;
+            ggml_tensor* lora_up   = nullptr;
+            ggml_tensor* lora_down = nullptr;
 
             if (lora_tensors.find(lora_up_name) != lora_tensors.end()) {
                 lora_up = lora_tensors[lora_up_name];
@@ -112,7 +112,7 @@ struct LoraModel : public GGMLModule {
                 lora_down = lora_tensors[lora_down_name];
             }
 
-            if (lora_up == NULL || lora_down == NULL) {
+            if (lora_up == nullptr || lora_down == nullptr) {
                 continue;
             }
 

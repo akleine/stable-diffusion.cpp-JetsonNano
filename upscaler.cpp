@@ -4,7 +4,7 @@
 #include "stable-diffusion.h"
 
 struct UpscalerGGML {
-    ggml_backend_t backend    = NULL;  // general backend
+    ggml_backend_t backend    = nullptr;  // general backend
     ggml_type model_data_type = GGML_TYPE_F16;
     std::shared_ptr<ESRGAN> esrgan_upscaler;
     std::string esrgan_path;
@@ -39,7 +39,7 @@ struct UpscalerGGML {
 
     sd_image_t upscale(sd_image_t input_image, uint32_t upscale_factor) {
         // upscale_factor, unused for RealESRGAN_x4plus_anime_6B.pth
-        sd_image_t upscaled_image = {0, 0, 0, NULL};
+        sd_image_t upscaled_image = {0, 0, 0, nullptr};
         int output_width          = (int)input_image.width * esrgan_upscaler->scale;
         int output_height         = (int)input_image.height * esrgan_upscaler->scale;
         LOG_INFO("upscaling from (%i x %i) to (%i x %i)",
@@ -48,7 +48,7 @@ struct UpscalerGGML {
         struct ggml_init_params params;
         params.mem_size = output_width * output_height * 3 * sizeof(float) * 2;
         params.mem_size += 2 * ggml_tensor_overhead();
-        params.mem_buffer = NULL;
+        params.mem_buffer = nullptr;
         params.no_alloc   = false;
 
         // draft context
@@ -84,28 +84,28 @@ struct UpscalerGGML {
 };
 
 struct upscaler_ctx_t {
-    UpscalerGGML* upscaler = NULL;
+    UpscalerGGML* upscaler = nullptr;
 };
 
 upscaler_ctx_t* new_upscaler_ctx(const char* esrgan_path_c_str,
                                  int n_threads,
                                  enum sd_type_t wtype) {
     upscaler_ctx_t* upscaler_ctx = (upscaler_ctx_t*)malloc(sizeof(upscaler_ctx_t));
-    if (upscaler_ctx == NULL) {
-        return NULL;
+    if (upscaler_ctx == nullptr) {
+        return nullptr;
     }
     std::string esrgan_path(esrgan_path_c_str);
 
     upscaler_ctx->upscaler = new UpscalerGGML(n_threads);
-    if (upscaler_ctx->upscaler == NULL) {
-        return NULL;
+    if (upscaler_ctx->upscaler == nullptr) {
+        return nullptr;
     }
 
     if (!upscaler_ctx->upscaler->load_from_file(esrgan_path)) {
         delete upscaler_ctx->upscaler;
-        upscaler_ctx->upscaler = NULL;
+        upscaler_ctx->upscaler = nullptr;
         free(upscaler_ctx);
-        return NULL;
+        return nullptr;
     }
     return upscaler_ctx;
 }
@@ -115,9 +115,9 @@ sd_image_t upscale(upscaler_ctx_t* upscaler_ctx, sd_image_t input_image, uint32_
 }
 
 void free_upscaler_ctx(upscaler_ctx_t* upscaler_ctx) {
-    if (upscaler_ctx->upscaler != NULL) {
+    if (upscaler_ctx->upscaler != nullptr) {
         delete upscaler_ctx->upscaler;
-        upscaler_ctx->upscaler = NULL;
+        upscaler_ctx->upscaler = nullptr;
     }
     free(upscaler_ctx);
 }

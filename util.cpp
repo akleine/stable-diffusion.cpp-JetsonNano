@@ -59,7 +59,7 @@ std::string format(const char* fmt, ...) {
     va_list ap2;
     va_start(ap, fmt);
     va_copy(ap2, ap);
-    int size = vsnprintf(NULL, 0, fmt, ap);
+    int size = vsnprintf(nullptr, 0, fmt, ap);
     std::vector<char> buf(size + 1);
     int size2 = vsnprintf(buf.data(), size + 1, fmt, ap2);
     va_end(ap2);
@@ -118,10 +118,10 @@ std::unique_ptr<MmapWrapper> MmapWrapper::create(const std::string& filename) {
         filename.c_str(),
         GENERIC_READ,
         FILE_SHARE_READ,
-        NULL,
+        nullptr,
         OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL,
-        NULL);
+        nullptr);
     if (file_handle == INVALID_HANDLE_VALUE) {
         return nullptr;
     }
@@ -131,13 +131,13 @@ std::unique_ptr<MmapWrapper> MmapWrapper::create(const std::string& filename) {
         return nullptr;
     }
     file_size             = static_cast<size_t>(size.QuadPart);
-    HANDLE mapping_handle = CreateFileMapping(file_handle, NULL, PAGE_READONLY, 0, 0, NULL);
-    if (mapping_handle == NULL) {
+    HANDLE mapping_handle = CreateFileMapping(file_handle, nullptr, PAGE_READONLY, 0, 0, nullptr);
+    if (mapping_handle == nullptr) {
         CloseHandle(file_handle);
         return nullptr;
     }
     mapped_data = MapViewOfFile(mapping_handle, FILE_MAP_READ, 0, 0, file_size);
-    if (mapped_data == NULL) {
+    if (mapped_data == nullptr) {
         CloseHandle(mapping_handle);
         CloseHandle(file_handle);
         return nullptr;
@@ -210,7 +210,7 @@ std::unique_ptr<MmapWrapper> MmapWrapper::create(const std::string& filename) {
     }
     size_t file_size = sb.st_size;
 
-    void* mapped_data = mmap(NULL, file_size, PROT_READ, mmap_flags, file_descriptor, 0);
+    void* mapped_data = mmap(nullptr, file_size, PROT_READ, mmap_flags, file_descriptor, 0);
     close(file_descriptor);
     if (mapped_data == MAP_FAILED) {
         return nullptr;
@@ -254,11 +254,11 @@ int32_t get_num_physical_cores() {
 #elif defined(__APPLE__) && defined(__MACH__)
     int32_t num_physical_cores;
     size_t len = sizeof(num_physical_cores);
-    int result = sysctlbyname("hw.perflevel0.physicalcpu", &num_physical_cores, &len, NULL, 0);
+    int result = sysctlbyname("hw.perflevel0.physicalcpu", &num_physical_cores, &len, nullptr, 0);
     if (result == 0) {
         return num_physical_cores;
     }
-    result = sysctlbyname("hw.physicalcpu", &num_physical_cores, &len, NULL, 0);
+    result = sysctlbyname("hw.physicalcpu", &num_physical_cores, &len, nullptr, 0);
     if (result == 0) {
         return num_physical_cores;
     }
@@ -269,8 +269,8 @@ int32_t get_num_physical_cores() {
     return n_threads > 0 ? (n_threads <= 4 ? n_threads : n_threads / 2) : 4;
 }
 
-static sd_progress_cb_t sd_progress_cb = NULL;
-void* sd_progress_cb_data              = NULL;
+static sd_progress_cb_t sd_progress_cb = nullptr;
+void* sd_progress_cb_data              = nullptr;
 
 std::u32string utf8_to_utf32(const std::string& utf8_str) {
     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
@@ -366,8 +366,8 @@ std::string trim(const std::string& s) {
     return rtrim(ltrim(s));
 }
 
-static sd_log_cb_t sd_log_cb = NULL;
-void* sd_log_cb_data         = NULL;
+static sd_log_cb_t sd_log_cb = nullptr;
+void* sd_log_cb_data         = nullptr;
 
 #define LOG_BUFFER_SIZE 1024
 
