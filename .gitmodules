@@ -1,3 +1,6 @@
 [submodule "ggml"]
     path = ggml
 	url = https://github.com/ggerganov/ggml.git
+[submodule "ggml_fattn"]
+	path = ggml_fattn
+	url = https://github.com/ggml-org/ggml.git
