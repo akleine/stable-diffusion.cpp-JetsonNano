@@ -11,11 +11,11 @@
 #include <vector>
 
 #ifndef SD_USE_NEW_GGML
-#include "ggml/ggml-backend.h"
-#include "ggml/ggml.h"
+#include "ggml/include/ggml/ggml-backend.h"
+#include "ggml/include/ggml/ggml.h"
 #else
-#include "ggml-backend.h"
-#include "ggml.h"
+#include "ggml_fattn/include/ggml-backend.h"
+#include "ggml_fattn/include/ggml.h"
 #endif
 #include "json.hpp"
 #include "zip.h"

@@ -21,17 +21,17 @@
 #include <vector>
 
 #ifndef SD_USE_NEW_GGML
-#include "ggml/ggml-alloc.h"
-#include "ggml/ggml-backend.h"
-#include "ggml/ggml.h"
+#include "ggml/include/ggml/ggml-alloc.h"
+#include "ggml/include/ggml/ggml-backend.h"
+#include "ggml/include/ggml/ggml.h"
 #else
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
-#include "ggml.h"
+#include "ggml_fattn/include/ggml-alloc.h"
+#include "ggml_fattn/include/ggml-backend.h"
+#include "ggml_fattn/include/ggml.h"
 #endif
 
 #ifdef SD_USE_CUDA
-#include "ggml-cuda.h"
+#include "ggml/src/ggml-cuda.h"
 #endif
 
 #ifdef SD_USE_METAL

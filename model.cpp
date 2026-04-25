@@ -11,15 +11,6 @@
 #include "util.h"
 #include "vocab.hpp"
 
-#ifndef SD_USE_NEW_GGML
-#include "ggml/ggml-alloc.h"
-#include "ggml/ggml-backend.h"
-#include "ggml/ggml.h"
-#else
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
-#include "ggml.h"
-#endif
 #include "stable-diffusion.h"
 
 #ifdef SD_USE_METAL
