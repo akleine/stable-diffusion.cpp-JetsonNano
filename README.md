@@ -30,15 +30,16 @@ Later sd.cpp (https://github.com/leejet/stable-diffusion.cpp) commits require a 
 | IMG2IMG mode    |:white_check_mark:|:white_check_mark:|:red_circle:      |
 | advanced models |:white_check_mark:|:red_circle:      |:red_circle:      |
 | Video support   |:white_check_mark:|:red_circle:      |:red_circle:      |
+| Flash Attention |:white_check_mark:|:red_circle:      |:white_check_mark:[^1]|
 | more samplers   |:white_check_mark:|:red_circle:      |:white_check_mark:|
 | more schedulers |:white_check_mark:|:red_circle:      |:white_check_mark:|
 | JPG support     |:white_check_mark:|:red_circle:      |:white_check_mark:|
 | MMAP support    |:white_check_mark:|:red_circle:      |:white_check_mark:|
 | CPU rng         |:white_check_mark:|:red_circle:      |:white_check_mark:|
-|tiny U-Net models|:white_check_mark:[^1]|:red_circle:  |:white_check_mark:|
+|tiny U-Net models|:white_check_mark:[^2]|:red_circle:  |:white_check_mark:|
 
-[^1]: tiny U-Net models except SDXS-09, and except "small" and "medium" versions of SD1.X and SD 2.x, see [models section](##Models)
-
+[^1]: only U-Nets in CPU mode
+[^2]: tiny U-Net models except "small" and "medium" versions of SD1.X and SD 2.x, see [models section](##Models)
 
 ## Compiling on the Jetson Nano
 
@@ -55,14 +56,28 @@ See here for some details on [Jetson Nano environment](./docs/prerequisites_on_J
 
 ### Build process
 
-Build from scratch as follows:
+
+After cloning this repo and prepare the submodules:
+```
+git submodule init
+git submodule update
+```
+.. there are **two way**s to continue:
+
+ 1 . for **GPU mode** (using CUDA)
 ```
 mkdir build
 cd build
-cmake .. -DSD_CUDA=ON                # old was:  cmake .. -DSD_CUBLAS=ON
+cmake .. -DSD_CUDA=ON
 cmake --build . --config Release
 ```
-
+ 2 . for **CPU mode** (with flash attention)
+```
+mkdir build_fattn
+cd build_fattn
+cmake .. -DSD_USE_NEW_GGML=ON
+cmake --build . --config Release
+```
 
 ## Running sd.cpp on the Jetson Nano
 

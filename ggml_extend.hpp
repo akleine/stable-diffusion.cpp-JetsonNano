@@ -714,40 +714,6 @@ __STATIC_INLINE__ struct ggml_tensor* ggml_nn_conv_2d(struct ggml_context* ctx,
 }
 
 // w: [OC，IC, KD, 1 * 1]
-// x: [N, IC, IH, IW]
-// b: [OC,]
-// result: [N, OC, OH, OW]
-__STATIC_INLINE__ struct ggml_tensor* ggml_nn_conv_3d_nx1x1_bak(struct ggml_context* ctx,
-                                                                struct ggml_tensor* x,
-                                                                struct ggml_tensor* w,
-                                                                struct ggml_tensor* b,
-                                                                int s2 = 1,
-                                                                int p2 = 1,
-                                                                int d2 = 1) {
-    GGML_ASSERT(w->ne[0] == 1);
-    // timesteps = x.shape[0]
-    // x = rearrange(x, "(b t) c h w -> b c t h w", t=timesteps)
-    // x = conv3d(x)
-    // return rearrange(x, "b c t h w -> (b t) c h w")
-    int64_t T = x->ne[3];
-    int64_t B = x->ne[3] / T;
-    int64_t C = x->ne[2];
-    int64_t H = x->ne[1];
-    int64_t W = x->ne[0];
-
-    x = ggml_reshape_4d(ctx, x, W * H, C, T, B);           // (b t) c h w -> b t c (h w)
-    x = ggml_cont(ctx, ggml_permute(ctx, x, 0, 2, 1, 3));  // b t c (h w) -> b c t (h w)
-    x = ggml_conv_2d(ctx, w, x, 1, s2, 0, p2, 1, d2);      // [B, OC, T, OH * OW]
-    if (b != nullptr) {
-        b = ggml_reshape_4d(ctx, b, 1, 1, b->ne[0], 1);
-        x = ggml_add(ctx, x, b);
-    }
-    x = ggml_cont(ctx, ggml_permute(ctx, x, 0, 2, 1, 3));  // b c t (h w) -> b t c (h w)
-    x = ggml_reshape_4d(ctx, x, W, H, C, T * B);           // b t c (h w) -> (b t) c h w
-    return x;                                              // [B*T, OC, OH, OW]
-}
-
-// w: [OC，IC, KD, 1 * 1]
 // x: [N, IC, ID, IH*IW]
 // b: [OC,]
 // result: [N, OC, OD, OH*OW]
