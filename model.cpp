@@ -633,46 +633,6 @@ void convert_tensor(void* src,
 
 /*================================================= ModelLoader ==================================================*/
 
-// ported from https://github.com/openai/CLIP/blob/main/clip/simple_tokenizer.py#L16
-std::map<char, int> unicode_to_byte() {
-    std::map<int, char> byte_to_unicode;
-
-    // List of utf-8 byte ranges
-    for (int b = static_cast<int>('!'); b <= static_cast<int>('~'); ++b) {
-        byte_to_unicode[b] = static_cast<char>(b);
-    }
-
-    for (int b = 49825; b <= 49836; ++b) {
-        byte_to_unicode[b] = static_cast<char>(b);
-    }
-
-    for (int b = 49838; b <= 50111; ++b) {
-        byte_to_unicode[b] = static_cast<char>(b);
-    }
-    // printf("%d %d %d %d\n", static_cast<int>('¡'), static_cast<int>('¬'), static_cast<int>('®'), static_cast<int>('ÿ'));
-    // exit(1);
-
-    int n = 0;
-    for (int b = 0; b < 256; ++b) {
-        if (byte_to_unicode.find(b) == byte_to_unicode.end()) {
-            byte_to_unicode[b] = static_cast<char>(256 + n);
-            n++;
-        }
-    }
-
-    // byte_encoder = bytes_to_unicode()
-    // byte_decoder = {v: k for k, v in byte_encoder.items()}
-    std::map<char, int> byte_decoder;
-
-    for (const auto& entry : byte_to_unicode) {
-        byte_decoder[entry.second] = entry.first;
-    }
-
-    byte_to_unicode.clear();
-
-    return byte_decoder;
-}
-
 bool is_zip_file(const std::string& file_path) {
     struct zip_t* zip = zip_open(file_path.c_str(), 0, 'r');
     if (zip == nullptr) {
