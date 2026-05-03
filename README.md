@@ -62,7 +62,7 @@ After cloning this repo and prepare the submodules:
 git submodule init
 git submodule update
 ```
-.. there are **two way**s to continue:
+.. there are **three way**s to continue:
 
  1 . for **GPU mode** (using CUDA)
 ```
@@ -78,6 +78,17 @@ cd build_fattn
 cmake .. -DSD_USE_NEW_GGML=ON
 cmake --build . --config Release
 ```
+
+ 3 . for **CPU mode** (a first test of Winograd algo)
+```
+mkdir build_wino
+cd build_wino
+cmake .. -DSD_USE_WINOGRAD=ON
+cmake --build . --config Release
+```
+That **Winograd test** runs on CPU only and needs some files from here: https://github.com/JingXuuu/sdcpp .
+First read more about Winograd here: https://arxiv.org/pdf/2412.05781
+
 
 ## Running sd.cpp on the Jetson Nano
 
