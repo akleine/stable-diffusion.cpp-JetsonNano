@@ -137,12 +137,12 @@ add_definitions(-DGGML_MAX_NAME=128)
 
 # deps
 if(SD_USE_NEW_GGML)
-#    if (SD_USE_WINOGRAD)
-#        # using parts of https://github.com/JingXuuu/sdcpp
-#        add_subdirectory(ggml_fattn_wino)
-#    else()        
+    if (SD_USE_WINOGRAD)
+        # using parts of https://github.com/JingXuuu/sdcpp
+        add_subdirectory(ggml_fattn_wino)
+    else()        
         add_subdirectory(ggml_fattn)
-#    endif()
+    endif()
 else()
     add_subdirectory(ggml)
 endif()

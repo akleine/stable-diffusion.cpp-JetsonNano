@@ -4,3 +4,6 @@
 [submodule "ggml_fattn"]
 	path = ggml_fattn
 	url = https://github.com/ggml-org/ggml.git
+[submodule "ggml_fattn_wino"]
+	path = ggml_fattn_wino
+	url = https://github.com/akleine/ggml.git

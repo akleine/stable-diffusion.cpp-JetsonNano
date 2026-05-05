@@ -31,6 +31,7 @@ Later sd.cpp (https://github.com/leejet/stable-diffusion.cpp) commits require a 
 | advanced models |:white_check_mark:|:red_circle:      |:red_circle:      |
 | Video support   |:white_check_mark:|:red_circle:      |:red_circle:      |
 | Flash Attention |:white_check_mark:|:red_circle:      |:white_check_mark:[^1]|
+| Winograd        |:red_circle:      |:red_circle:      |:white_check_mark:[^1]|
 | more samplers   |:white_check_mark:|:red_circle:      |:white_check_mark:|
 | more schedulers |:white_check_mark:|:red_circle:      |:white_check_mark:|
 | JPG support     |:white_check_mark:|:red_circle:      |:white_check_mark:|
@@ -38,7 +39,7 @@ Later sd.cpp (https://github.com/leejet/stable-diffusion.cpp) commits require a 
 | CPU rng         |:white_check_mark:|:red_circle:      |:white_check_mark:|
 |tiny U-Net models|:white_check_mark:[^2]|:red_circle:  |:white_check_mark:|
 
-[^1]: only U-Nets in CPU mode
+[^1]: in CPU mode
 [^2]: tiny U-Net models except "small" and "medium" versions of SD1.X and SD 2.x, see [models section](##Models)
 
 ## Compiling on the Jetson Nano
@@ -79,16 +80,15 @@ cmake .. -DSD_USE_NEW_GGML=ON
 cmake --build . --config Release
 ```
 
- 3 . for **CPU mode** (a first test of Winograd algo)
+ 3 . for **CPU mode** (using Winograd algorithm)
 ```
-mkdir build_wino
-cd build_wino
-cmake .. -DSD_USE_WINOGRAD=ON
+mkdir build_fattn_wino
+cd build_fattn_wino
+cmake .. -DSD_USE_NEW_GGML=ON -DSD_USE_WINOGRAD=ON
 cmake --build . --config Release
 ```
-That **Winograd test** runs on CPU only and needs some files from here: https://github.com/JingXuuu/sdcpp .
-First read more about Winograd here: https://arxiv.org/pdf/2412.05781
-
+Here we use the same GGML commit in option #2, but forked and extended with some additional code for the Winograd algorithm. It is based on https://github.com/JingXuuu/sdcpp/blob/main/ggml/src/ggml.c ,
+but was adapted to fit the later GGML commit. That **Winograd** GGML lib runs on CPU only.  Read more about Winograd here: https://arxiv.org/pdf/2412.05781
 
 ## Running sd.cpp on the Jetson Nano
 
