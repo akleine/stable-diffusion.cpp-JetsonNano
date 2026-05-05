@@ -50,11 +50,11 @@ if(SD_USE_NEW_GGML)
 endif()
 
 if(SD_USE_WINOGRAD)
-    message("Testing Wingograd algo")
+    message("Use Wingograd algoithm")
     set(GGML_CUBLAS OFF)
     set(GGML_CUDA OFF)
     add_definitions(-DSD_USE_WINOGRAD)
-    #   add_compile_definitions(float16_t=_Float16)
+       add_compile_definitions(float16_t=_Float16)
 endif()
 
 if(SD_METAL)
@@ -137,14 +137,14 @@ add_definitions(-DGGML_MAX_NAME=128)
 
 # deps
 if(SD_USE_NEW_GGML)
-    add_subdirectory(ggml_fattn)
+#    if (SD_USE_WINOGRAD)
+#        # using parts of https://github.com/JingXuuu/sdcpp
+#        add_subdirectory(ggml_fattn_wino)
+#    else()        
+        add_subdirectory(ggml_fattn)
+#    endif()
 else()
-    if (SD_USE_WINOGRAD)
-        # see https://github.com/JingXuuu/sdcpp
-        add_subdirectory(ggml_wino)
-    else()
-        add_subdirectory(ggml)
-    endif()
+    add_subdirectory(ggml)
 endif()
 
 add_subdirectory(thirdparty)
