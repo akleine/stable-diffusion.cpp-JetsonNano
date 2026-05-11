@@ -87,8 +87,11 @@ cd build_fattn_wino
 cmake .. -DSD_USE_NEW_GGML=ON -DSD_USE_WINOGRAD=ON
 cmake --build . --config Release
 ```
-Here we use the same GGML commit in option #2, but forked and extended with some additional code for the Winograd algorithm. It is based on https://github.com/JingXuuu/sdcpp/blob/main/ggml/src/ggml.c ,
-but was adapted to fit the later GGML commit. That **Winograd** GGML lib runs on CPU only.  Read more about Winograd here: https://arxiv.org/pdf/2412.05781
+Here we use the same GGML commit as in option #2, but forked and extended with some additional code for the Winograd algorithm. It is based on https://github.com/JingXuuu/sdcpp/blob/main/ggml/src/ggml.c ,
+but was adapted to fit the later GGML commit. That Winograd GGML lib runs on CPU only.  Read more about Winograd here:
+* https://medium.com/@dmangla3/understanding-winograd-fast-convolution-a75458744ff
+* https://kth.diva-portal.org/smash/get/diva2:1778618/FULLTEXT01.pdf
+* https://arxiv.org/pdf/2412.05781
 
 ## Running sd.cpp on the Jetson Nano
 

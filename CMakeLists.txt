@@ -54,7 +54,6 @@ if(SD_USE_WINOGRAD)
     set(GGML_CUBLAS OFF)
     set(GGML_CUDA OFF)
     add_definitions(-DSD_USE_WINOGRAD)
-       add_compile_definitions(float16_t=_Float16)
 endif()
 
 if(SD_METAL)
