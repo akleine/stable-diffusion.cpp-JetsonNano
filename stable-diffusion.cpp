@@ -410,7 +410,7 @@ public:
                     break;
                 default:
                     LOG_ERROR("Unknown scheduler %i", scheduler);
-                    abort();
+                    return false;
             }
         }
 
@@ -769,8 +769,10 @@ public:
             }
             return denoised;
         };
-        sample_k_diffusion(method, denoise, work_ctx, x, sigmas, rng, eta);
-
+        if (!sample_k_diffusion(method, denoise, work_ctx, x, sigmas, rng, eta)) {
+            LOG_ERROR("diffusion model compute failed");
+            x = nullptr;
+        }
         diffusion_model->free_compute_buffer();
         return x;
     }
