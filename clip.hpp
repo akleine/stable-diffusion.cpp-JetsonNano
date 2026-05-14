@@ -812,13 +812,8 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
                                              hidden_states2->ne[2],
                                              hidden_states2->ne[3]);
             hidden_states2 = ggml_cont(ctx, ggml_permute(ctx, hidden_states2, 2, 0, 1, 3));
-
-#ifndef SD_USE_NEW_GGML
-            hidden_states = ggml_concat(ctx, hidden_states, hidden_states2);  // [N, n_token, hidden_size + hidden_size2]
-#else
-            hidden_states = ggml_concat(ctx, hidden_states, hidden_states2, 2);  // [N, n_token, hidden_size + hidden_size2]
-#endif
-            hidden_states = ggml_cont(ctx, ggml_permute(ctx, hidden_states, 1, 2, 0, 3));
+            hidden_states  = ggml_concat(ctx, hidden_states, hidden_states2, 2);  // [N, n_token, hidden_size + hidden_size2]
+            hidden_states  = ggml_cont(ctx, ggml_permute(ctx, hidden_states, 1, 2, 0, 3));
         }
         hidden_states = ggml_reshape_3d(ctx, hidden_states, hidden_states->ne[0], n_token, N);
         // LOG_DEBUG("hidden_states: %d %d %d %d", hidden_states->ne[0], hidden_states->ne[1], hidden_states->ne[2], hidden_states->ne[3]);
@@ -850,11 +845,7 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
             token_embed_weight      = ggml_reshape_3d(compute_ctx, token_embed_weight, token_embed_weight->ne[0], 1, token_embed_weight->ne[1]);
             // concatenate custom embeddings
 
-#ifndef SD_USE_NEW_GGML
-            embeddings = ggml_concat(compute_ctx, token_embed_weight, custom_embeddings);
-#else
             embeddings = ggml_concat(compute_ctx, token_embed_weight, custom_embeddings, 2);
-#endif
             embeddings = ggml_reshape_2d(compute_ctx, embeddings, embeddings->ne[0], embeddings->ne[2]);
         }
 

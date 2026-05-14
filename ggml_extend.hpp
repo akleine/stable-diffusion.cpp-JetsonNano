@@ -20,18 +20,12 @@
 #include <unordered_map>
 #include <vector>
 
-#ifndef SD_USE_NEW_GGML
-#include "ggml/include/ggml/ggml-alloc.h"
-#include "ggml/include/ggml/ggml-backend.h"
-#include "ggml/include/ggml/ggml.h"
-#else
-#include "ggml_fattn/include/ggml-alloc.h"
-#include "ggml_fattn/include/ggml-backend.h"
-#include "ggml_fattn/include/ggml.h"
-#endif
-
 #ifdef SD_USE_CUDA
-#include "ggml/src/ggml-cuda.h"
+#include "ggml/include/ggml-cuda.h"
+#else
+#include "ggml/include/ggml-alloc.h"
+#include "ggml/include/ggml-backend.h"
+#include "ggml/include/ggml.h"
 #endif
 
 #ifdef SD_USE_METAL
@@ -672,11 +666,7 @@ __STATIC_INLINE__ void sd_tiling(ggml_tensor* input,
 
 __STATIC_INLINE__ struct ggml_tensor* ggml_group_norm_32(struct ggml_context* ctx,
                                                          struct ggml_tensor* a) {
-#ifndef SD_USE_NEW_GGML
-    return ggml_group_norm(ctx, a, 32);
-#else
     return ggml_group_norm(ctx, a, 32, EPS);
-#endif
 }
 
 __STATIC_INLINE__ struct ggml_tensor* ggml_nn_linear(struct ggml_context* ctx,
@@ -784,8 +774,7 @@ __STATIC_INLINE__ struct ggml_tensor* ggml_nn_attention_ext(struct ggml_context*
     }
     float scale      = (1.0f / sqrt((float)d_head));
     ggml_tensor* kqv = nullptr;
-#ifndef SD_USE_NEW_GGML
-#else
+#ifndef SD_USE_CUDA
     if (flash_attn) {
         k   = ggml_cast(ctx, k, GGML_TYPE_F16);
         v   = ggml_cont(ctx, ggml_permute(ctx, v, 0, 2, 1, 3));  // [N, n_head, L_k, d_head]
@@ -841,13 +830,7 @@ __STATIC_INLINE__ struct ggml_tensor* ggml_nn_group_norm(struct ggml_context* ct
         w = ggml_reshape_4d(ctx, w, 1, 1, w->ne[0], 1);
         b = ggml_reshape_4d(ctx, b, 1, 1, b->ne[0], 1);
     }
-
-#ifndef SD_USE_NEW_GGML
-    x = ggml_group_norm(ctx, x, num_groups);
-#else
     x = ggml_group_norm(ctx, x, num_groups, EPS);
-#endif
-
     if (w != nullptr && b != nullptr) {
         x = ggml_mul(ctx, x, w);
         // b = ggml_repeat(ctx, b, x);

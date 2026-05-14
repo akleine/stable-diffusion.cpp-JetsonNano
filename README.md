@@ -30,14 +30,14 @@ Later sd.cpp (https://github.com/leejet/stable-diffusion.cpp) commits require a 
 | IMG2IMG mode    |:white_check_mark:|:white_check_mark:|:red_circle:      |
 | advanced models |:white_check_mark:|:red_circle:      |:red_circle:      |
 | Video support   |:white_check_mark:|:red_circle:      |:red_circle:      |
-| Flash Attention |:white_check_mark:|:red_circle:      |:white_check_mark:[^1]|
-| Winograd        |:red_circle:      |:red_circle:      |:white_check_mark:[^1]|
 | more samplers   |:white_check_mark:|:red_circle:      |:white_check_mark:|
 | more schedulers |:white_check_mark:|:red_circle:      |:white_check_mark:|
 | JPG support     |:white_check_mark:|:red_circle:      |:white_check_mark:|
 | MMAP support    |:white_check_mark:|:red_circle:      |:white_check_mark:|
 | CPU rng         |:white_check_mark:|:red_circle:      |:white_check_mark:|
 |tiny U-Net models|:white_check_mark:[^2]|:red_circle:  |:white_check_mark:|
+| Flash Attention |:white_check_mark:|:red_circle:      |:white_check_mark:[^1]|
+| Winograd        |:red_circle:      |:red_circle:      |:white_check_mark:[^1]|
 
 [^1]: in CPU mode
 [^2]: tiny U-Net models except "small" and "medium" versions of SD1.X and SD 2.x, see [models section](##Models)
@@ -61,34 +61,23 @@ See here for some details on [Jetson Nano environment](./docs/prerequisites_on_J
 After cloning this repo and prepare the submodules:
 ```
 git submodule init
-git submodule update
+git submodule update --remote --merge
+mkdir build
+cd build
 ```
-.. there are **three way**s to continue:
+.. there are **two ways** to continue:
 
  1 . for **GPU mode** (using CUDA)
 ```
-mkdir build
-cd build
 cmake .. -DSD_CUDA=ON
 cmake --build . --config Release
 ```
- 2 . for **CPU mode** (with flash attention)
+ 2 . for **CPU mode**
 ```
-mkdir build_fattn
-cd build_fattn
-cmake .. -DSD_USE_NEW_GGML=ON
+cmake ..
 cmake --build . --config Release
 ```
-
- 3 . for **CPU mode** (using Winograd algorithm)
-```
-mkdir build_fattn_wino
-cd build_fattn_wino
-cmake .. -DSD_USE_NEW_GGML=ON -DSD_USE_WINOGRAD=ON
-cmake --build . --config Release
-```
-Here we use the same GGML commit as in option #2, but forked and extended with some additional code for the Winograd algorithm. It is based on https://github.com/JingXuuu/sdcpp/blob/main/ggml/src/ggml.c ,
-but was adapted to fit the later GGML commit. That Winograd GGML lib runs on CPU only.  Read more about Winograd here:
+Of course the CPU mode is very slow, but uses Flash Attention and the Winograd algorithm. Winograd is based on https://github.com/JingXuuu/sdcpp/blob/main/ggml/src/ggml.c , but was adapted to fit the later GGML commit. Read more about Winograd here:
 * https://medium.com/@dmangla3/understanding-winograd-fast-convolution-a75458744ff
 * https://kth.diva-portal.org/smash/get/diva2:1778618/FULLTEXT01.pdf
 * https://arxiv.org/pdf/2412.05781

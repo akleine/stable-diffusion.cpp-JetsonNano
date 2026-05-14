@@ -41,17 +41,7 @@ public:
         auto conv4 = std::dynamic_pointer_cast<Conv2d>(blocks["conv4"]);
         auto conv5 = std::dynamic_pointer_cast<Conv2d>(blocks["conv5"]);
 
-        auto x1 = lrelu(ctx, conv1->forward(ctx, x));
-
-#ifndef SD_USE_NEW_GGML
-        auto x_cat = ggml_concat(ctx, x, x1);
-        auto x2    = lrelu(ctx, conv2->forward(ctx, x_cat));
-        x_cat      = ggml_concat(ctx, x_cat, x2);
-        auto x3    = lrelu(ctx, conv3->forward(ctx, x_cat));
-        x_cat      = ggml_concat(ctx, x_cat, x3);
-        auto x4    = lrelu(ctx, conv4->forward(ctx, x_cat));
-        x_cat      = ggml_concat(ctx, x_cat, x4);
-#else
+        auto x1    = lrelu(ctx, conv1->forward(ctx, x));
         auto x_cat = ggml_concat(ctx, x, x1, 2);
         auto x2    = lrelu(ctx, conv2->forward(ctx, x_cat));
         x_cat      = ggml_concat(ctx, x_cat, x2, 2);
@@ -59,8 +49,7 @@ public:
         x_cat      = ggml_concat(ctx, x_cat, x3, 2);
         auto x4    = lrelu(ctx, conv4->forward(ctx, x_cat));
         x_cat      = ggml_concat(ctx, x_cat, x4, 2);
-#endif
-        auto x5 = conv5->forward(ctx, x_cat);
+        auto x5    = conv5->forward(ctx, x_cat);
 
         x5 = ggml_add(ctx, ggml_scale(ctx, x5, 0.2f), x);
         return x5;

@@ -1,10 +1,8 @@
-#include "ggml_extend.hpp"
-
+#include "stable-diffusion.h"
 #include "model.h"
 #include "rng.hpp"
 #include "rng_mt19937.hpp"
 #include "rng_philox.hpp"
-#include "stable-diffusion.h"
 #include "util.h"
 
 #include "clip.hpp"

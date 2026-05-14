@@ -358,12 +358,12 @@ struct LCMScheduler : SigmaScheduler {
 };
 
 struct Denoiser {
-    std::shared_ptr<SigmaScheduler> scheduler                                                = std::make_shared<DiscreteScheduler>();
-    virtual float sigma_min()                                                                = 0;
-    virtual float sigma_max()                                                                = 0;
-    virtual float sigma_to_t(float sigma)                                                    = 0;
-    virtual float t_to_sigma(float t)                                                        = 0;
-    virtual std::vector<float> get_scalings(float sigma)                                     = 0;
+    std::shared_ptr<SigmaScheduler> scheduler            = std::make_shared<DiscreteScheduler>();
+    virtual float sigma_min()                            = 0;
+    virtual float sigma_max()                            = 0;
+    virtual float sigma_to_t(float sigma)                = 0;
+    virtual float t_to_sigma(float t)                    = 0;
+    virtual std::vector<float> get_scalings(float sigma) = 0;
 
     virtual std::vector<float> get_sigmas(uint32_t n) {
         auto bound_t_to_sigma = std::bind(&Denoiser::t_to_sigma, this, std::placeholders::_1);
@@ -688,7 +688,7 @@ static bool sample_k_diffusion(sample_method_t method,
                     if (denoised == nullptr) {
                         return false;
                     }
-                    float* vec_denoised   = (float*)denoised->data;
+                    float* vec_denoised = (float*)denoised->data;
                     for (int j = 0; j < ggml_nelements(x); j++) {
                         float d2 = (vec_x2[j] - vec_denoised[j]) / sigmas[i + 1];
                         vec_d[j] = (vec_d[j] + d2) / 2;
@@ -746,7 +746,7 @@ static bool sample_k_diffusion(sample_method_t method,
                     if (denoised == nullptr) {
                         return false;
                     }
-                    float* vec_denoised   = (float*)denoised->data;
+                    float* vec_denoised = (float*)denoised->data;
                     for (int j = 0; j < ggml_nelements(x); j++) {
                         float d2 = (vec_x2[j] - vec_denoised[j]) / sigma_mid;
                         vec_x[j] = vec_x[j] + d2 * dt_2;
@@ -942,7 +942,7 @@ static bool sample_k_diffusion(sample_method_t method,
                     return false;
                 }
 
-                float* vec_denoised   = (float*)denoised->data;
+                float* vec_denoised = (float*)denoised->data;
                 // d_cur = (x_cur - denoised) / sigma
                 struct ggml_tensor* d_cur = ggml_dup_tensor(work_ctx, x_cur);
                 float* vec_d_cur          = (float*)d_cur->data;
@@ -1012,7 +1012,7 @@ static bool sample_k_diffusion(sample_method_t method,
                 float t_next = sigmas[i + 1];
 
                 // Denoising step
-                ggml_tensor* denoised     = model(x, sigma, i + 1);
+                ggml_tensor* denoised = model(x, sigma, i + 1);
                 if (denoised == nullptr) {
                     return false;
                 }
@@ -1375,7 +1375,7 @@ static bool sample_k_diffusion(sample_method_t method,
                 }
                 struct ggml_tensor* model_output = model(x, sigma, i + 1);
                 if (model_output == nullptr) {
-                        return false;
+                    return false;
                 }
                 {
                     float* vec_x = (float*)x->data;
