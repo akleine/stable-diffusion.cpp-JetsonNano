@@ -545,7 +545,7 @@ protected:
     int64_t num_positions;
 
     void init_params(struct ggml_context* ctx, ggml_type wtype) {
-        params["token_embedding.weight"]    = ggml_new_tensor_2d(ctx, wtype, embed_dim, vocab_size);
+        params["token_embedding.weight"]    = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, /* wtype, */ embed_dim, vocab_size);
         params["position_embedding.weight"] = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, embed_dim, num_positions);
     }
 

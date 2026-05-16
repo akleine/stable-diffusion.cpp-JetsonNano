@@ -16,7 +16,7 @@ Also read about the [sd.cpp commit](https://github.com/leejet/stable-diffusion.c
 
 ## About this special fork for the Jetson Nano
 
-Later sd.cpp (https://github.com/leejet/stable-diffusion.cpp) commits require a more up-to-date NVCC compiler, CUDA Toolkit 11+, and improved GPU capabilities, which the Jetson's NVIDIA Tegra X1 lacks. The highest CUDA version supported on the Jetson Nano is 10.2. The commit #e1384de (https://github.com/leejet/stable-diffusion.cpp/tree/e1384de) is the last in a long series of usable commits, and this fork is built on top. It can be easily compiled using the ```CUDA``` option out of the box on the Jetson Nano, no patches are needed. Many thanks for this excellent work! For detailed compilation instructions, see below.
+Later sd.cpp (https://github.com/leejet/stable-diffusion.cpp) commits require a more up-to-date NVCC compiler, CUDA Toolkit 11+, and improved GPU capabilities, which the Jetson's NVIDIA Tegra X1 lacks. The highest CUDA version supported on the Jetson Nano is 10.2. The commit #e1384de (https://github.com/leejet/stable-diffusion.cpp/tree/e1384de) is the last in a long series of usable commits, and this fork is built on top. It can be easily compiled with CUDA support out of the box on the Jetson Nano, requiring no additional patches. any thanks for this excellent work! For detailed compilation instructions, see below.
 
 **Many commits from the newer sd.cpp versions have been backported to this particular fork.**  Most of these commits concern the operation of SD1/2.x models and some tiny derivatives. Due to the limited shared memory in the Jetson Nano, the inpainting function and the features of more advanced models (SD3, Flux, Z-Image, etc.) could not be ported. However, this fork provides everything you need to get started with sd.cpp on the Jetson Nano. Some differences between the sd.cpp versions are:
 |                 |   leejet master  |  leejet #e1384de |   Jetson Nano    |
@@ -61,7 +61,7 @@ See here for some details on [Jetson Nano environment](./docs/prerequisites_on_J
 After cloning this repo and prepare the submodules:
 ```
 git submodule init
-git submodule update --remote --merge
+git submodule update   # --remote --merge
 mkdir build
 cd build
 ```
@@ -89,32 +89,47 @@ If using f16 tensors do not try to extend the output picture dimensions much mor
 
 ### Run example:
 ```
-./sd  -m ~/your-sd1.5-model.safetensors -W 384 -H 512 \
-  -v --steps 15 --taesd ~/your-taesd-model.safetensors \
-  -p "A lovely little kitten, full SD photo"
+./sd  -m ~/SD_models/sd1/stable-diffusion-v1-5-pruned-emaonly-f16.gguf -W 512 -H 512 \
+   -v --steps 3 --seed 123 \
+   --cfg-scale 1 \
+   --sampling-method lcm --scheduler lcm \
+   --lora-model-dir ~/SD_models/loras_sd15 \
+   --taesd ~/SD_models/sd1/taesd_diffusion_pytorch_model.safetensors \
+   -p "A lovely little kitten, full SD photo<lora:lcm-lora-sdv1-5:1>" \
+   -o output_1.png
 ```  
 Here are some output parts:
 ```
-[DEBUG] stable-diffusion.cpp:149  - Using CUDA backend
-ggml_init_cublas: GGML_CUDA_FORCE_MMQ:   no
-ggml_init_cublas: CUDA_USE_TENSOR_CORES: yes
-ggml_init_cublas: found 1 CUDA devices:
+[DEBUG] stable-diffusion.cpp:143  - Using CUDA backend
+ggml_cuda_init: GGML_CUDA_FORCE_MMQ:    no
+ggml_cuda_init: GGML_CUDA_FORCE_CUBLAS: no
+ggml_cuda_init: found 1 CUDA devices:
   Device 0: NVIDIA Tegra X1, compute capability 5.3, VMM: no
 ...
-[INFO ] stable-diffusion.cpp:419  - total params memory size = 1877.65MB (VRAM 1877.65MB, RAM 0.00MB): clip 235.06MB(VRAM), unet 1640.25MB(VRAM), vae 2.34MB(VRAM), controlnet 0.00MB(VRAM), pmid 0.00MB(VRAM)
-....
-[DEBUG] ggml_extend.hpp:837  - unet compute buffer size: 325.82 MB(VRAM)
-  |==================================================| 15/15 - 14.75s/it
-[INFO ] stable-diffusion.cpp:1763 - sampling completed, taking 221.48s
-[INFO ] stable-diffusion.cpp:1771 - generating 1 latent images completed, taking 221.60s
-[INFO ] stable-diffusion.cpp:1774 - decoding 1 latents
-[DEBUG] ggml_extend.hpp:837  - taesd compute buffer size: 360.00 MB(VRAM)
-[DEBUG] stable-diffusion.cpp:1455 - computing vae [mode: DECODE] graph completed, taking 5.63s
-[INFO ] stable-diffusion.cpp:1784 - latent 1 decoded, taking 5.63s
-[INFO ] stable-diffusion.cpp:1788 - decode_first_stage completed, taking 5.63s
-[INFO ] stable-diffusion.cpp:1872 - txt2img completed in 227.73s
-save result image to 'output.png'
+[INFO ] stable-diffusion.cpp:340  - total params memory size = 1950.03MB (VRAM 1950.03MB, RAM 0.00MB): clip 307.44MB(VRAM), unet 1640.25MB(VRAM), vae 2.34MB(VRAM)
+...
+[DEBUG] ggml_extend.hpp:1037 - lora compute buffer size: 227.81 MB(VRAM)
+...
+[DEBUG] clip.hpp:938  - parse 'A lovely little kitten, full SD photo' to [['A lovely little kitten, full SD photo', 1], ]
+[DEBUG] clip.hpp:887  - token length: 77
+[DEBUG] ggml_extend.hpp:1037 - clip compute buffer size: 1.40 MB(VRAM)
+[DEBUG] stable-diffusion.cpp:577  - computing condition graph completed, taking 204 ms
+[INFO ] stable-diffusion.cpp:955  - get_learned_condition completed, taking 211 ms
+[INFO ] stable-diffusion.cpp:969  - sampling using LCM method
+[INFO ] stable-diffusion.cpp:973  - generating image: 1/1 - seed 123
+[DEBUG] ggml_extend.hpp:1037 - unet compute buffer size: 559.90 MB(VRAM)
+  |==================================================| 3/3 - 9.31s/it
+[INFO ] stable-diffusion.cpp:993  - sampling completed, taking 28.45s
+[INFO ] stable-diffusion.cpp:1001 - generating 1 latent images completed, taking 28.59s
+[INFO ] stable-diffusion.cpp:1004 - decoding 1 latents
+[DEBUG] ggml_extend.hpp:1037 - taesd compute buffer size: 480.00 MB(VRAM)
+[DEBUG] stable-diffusion.cpp:820  - computing vae [mode: DECODE] graph completed, taking 7.49s
+[INFO ] stable-diffusion.cpp:1014 - latent 1 decoded, taking 7.49s
+[INFO ] stable-diffusion.cpp:1018 - decode_first_stage completed, taking 7.49s
+[INFO ] stable-diffusion.cpp:1083 - txt2img completed in 49.43s
+save result PNG image to 'output_1.png'
 ```
+As you can see, the process takes some time, even when using a GPU. Therefore, the use of LCM-LoRAs, tiny SD models and ```--taesd``` is strongly recommended.
 
 ## Models
 
