@@ -543,19 +543,23 @@ protected:
     int64_t embed_dim;
     int64_t vocab_size;
     int64_t num_positions;
+    std::string embeddings_path;
 
     void init_params(struct ggml_context* ctx, ggml_type wtype) {
-        params["token_embedding.weight"]    = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, /* wtype, */ embed_dim, vocab_size);
+        wtype                               = embeddings_path.empty() ? wtype : GGML_TYPE_F32;
+        params["token_embedding.weight"]    = ggml_new_tensor_2d(ctx, wtype, embed_dim, vocab_size);
         params["position_embedding.weight"] = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, embed_dim, num_positions);
     }
 
 public:
     CLIPEmbeddings(int64_t embed_dim,
-                   int64_t vocab_size    = 49408,
-                   int64_t num_positions = 77)
+                   int64_t vocab_size          = 49408,
+                   int64_t num_positions       = 77,
+                   std::string embeddings_path = "")
         : embed_dim(embed_dim),
           vocab_size(vocab_size),
-          num_positions(num_positions) {
+          num_positions(num_positions),
+          embeddings_path(embeddings_path) {
     }
 
     struct ggml_tensor* get_token_embed_weight() {
@@ -613,9 +617,10 @@ public:
     int32_t clip_skip         = -1;
     bool with_final_ln        = true;
 
-    CLIPTextModel(CLIPVersion version = OPENAI_CLIP_VIT_L_14,
-                  int clip_skip_value = -1,
-                  bool with_final_ln  = true)
+    CLIPTextModel(CLIPVersion version         = OPENAI_CLIP_VIT_L_14,
+                  int clip_skip_value         = -1,
+                  std::string embeddings_path = "",
+                  bool with_final_ln          = true)
         : version(version), with_final_ln(with_final_ln) {
         if (version == OPEN_CLIP_VIT_H_14) {
             hidden_size       = 1024;
@@ -629,8 +634,7 @@ public:
             n_layer           = 32;
         }
         set_clip_skip(clip_skip_value);
-
-        blocks["embeddings"]       = std::shared_ptr<GGMLBlock>(new CLIPEmbeddings(hidden_size, vocab_size, n_token));
+        blocks["embeddings"]       = std::shared_ptr<GGMLBlock>(new CLIPEmbeddings(hidden_size, vocab_size, n_token, embeddings_path));
         blocks["encoder"]          = std::shared_ptr<GGMLBlock>(new CLIPEncoder(n_layer, hidden_size, n_head, intermediate_size));
         blocks["final_layer_norm"] = std::shared_ptr<GGMLBlock>(new LayerNorm(hidden_size));
     }
@@ -689,6 +693,7 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
 
     FrozenCLIPEmbedderWithCustomWords(ggml_backend_t backend,
                                       ggml_type wtype,
+                                      std::string embeddings_path,
                                       SDVersion version = VERSION_SD1,
                                       int clip_skip     = -1)
         : GGMLModule(backend, wtype), version(version), tokenizer(version) {
@@ -699,14 +704,14 @@ struct FrozenCLIPEmbedderWithCustomWords : public GGMLModule {
             }
         }
         if (sd_version_is_sd1(version)) {
-            text_model = CLIPTextModel(OPENAI_CLIP_VIT_L_14, clip_skip);
+            text_model = CLIPTextModel(OPENAI_CLIP_VIT_L_14, clip_skip, embeddings_path);
             text_model.init(params_ctx, wtype);
         } else if (sd_version_is_sd2(version)) {
-            text_model = CLIPTextModel(OPEN_CLIP_VIT_H_14, clip_skip);
+            text_model = CLIPTextModel(OPEN_CLIP_VIT_H_14, clip_skip, embeddings_path);
             text_model.init(params_ctx, wtype);
         } else if (sd_version_is_sdxl(version)) {
-            text_model  = CLIPTextModel(OPENAI_CLIP_VIT_L_14, clip_skip, false);
-            text_model2 = CLIPTextModel(OPEN_CLIP_VIT_BIGG_14, clip_skip, false);
+            text_model  = CLIPTextModel(OPENAI_CLIP_VIT_L_14, clip_skip, embeddings_path, false);
+            text_model2 = CLIPTextModel(OPEN_CLIP_VIT_BIGG_14, clip_skip, embeddings_path, false);
             text_model.init(params_ctx, wtype);
             text_model2.init(params_ctx, wtype);
         }
