@@ -216,13 +216,17 @@ public:
                 clip_backend = ggml_backend_cpu_init();
             }
             cond_stage_model = std::make_shared<FrozenCLIPEmbedderWithCustomWords>(clip_backend, model_data_type, embeddings_path, version);
-            cond_stage_model->alloc_params_buffer();
+            if (!cond_stage_model->alloc_params_buffer()) {
+                return false;
+            }
             cond_stage_model->get_param_tensors(tensors, "cond_stage_model.");
 
             cond_stage_model->embd_dir = embeddings_path;
 
             diffusion_model = std::make_shared<UNetModel>(backend, model_data_type, version);
-            diffusion_model->alloc_params_buffer();
+            if (!diffusion_model->alloc_params_buffer()) {
+                return false;
+            }
             diffusion_model->get_param_tensors(tensors, "model.diffusion_model");
 
             ggml_type vae_type = model_data_type;
@@ -238,12 +242,16 @@ public:
                     vae_backend = backend;
                 }
                 first_stage_model = std::make_shared<AutoEncoderKL>(vae_backend, vae_type, vae_decode_only);
-                first_stage_model->alloc_params_buffer();
+                if (!first_stage_model->alloc_params_buffer()) {
+                    return false;
+                }
                 first_stage_model->get_param_tensors(tensors, "first_stage_model");
             } else {
                 tae_first_stage = std::make_shared<TinyAutoEncoder>(backend, model_data_type, vae_decode_only);
                 if (version == VERSION_SDXS || version == VERSION_SDXS_09) {
-                    tae_first_stage->alloc_params_buffer();
+                    if (!tae_first_stage->alloc_params_buffer()) {
+                        return false;
+                    }
                     tae_first_stage->get_param_tensors(tensors, "first_stage_model");
                 }
                 vae_backend = backend;

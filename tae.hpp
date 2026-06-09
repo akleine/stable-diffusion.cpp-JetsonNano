@@ -202,7 +202,9 @@ struct TinyAutoEncoder : public GGMLModule {
 
     bool load_from_file(const std::string& file_path, bool enable_mmap) {
         LOG_INFO("loading taesd from '%s', decode_only = %s", file_path.c_str(), decode_only ? "true" : "false");
-        alloc_params_buffer();
+        if (!alloc_params_buffer()) {
+            return false;
+        }
         std::map<std::string, ggml_tensor*> taesd_tensors;
         taesd.get_param_tensors(taesd_tensors);
         std::set<std::string> ignore_tensors;

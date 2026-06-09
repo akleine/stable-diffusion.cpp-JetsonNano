@@ -64,7 +64,9 @@ struct LoraModel : public GGMLModule {
         };
 
         model_loader.load_tensors(on_new_tensor_cb, backend, enable_mmap);
-        alloc_params_buffer();
+        if (!alloc_params_buffer()) {
+            return false;
+        }
 
         dry_run = false;
         model_loader.load_tensors(on_new_tensor_cb, backend, enable_mmap);

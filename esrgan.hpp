@@ -155,7 +155,9 @@ struct ESRGAN : public GGMLModule {
     bool load_from_file(const std::string& file_path) {
         LOG_INFO("loading esrgan from '%s'", file_path.c_str());
 
-        alloc_params_buffer();
+        if (!alloc_params_buffer()) {
+            return false;
+        }
         std::map<std::string, ggml_tensor*> esrgan_tensors;
         rrdb_net.get_param_tensors(esrgan_tensors);
 
