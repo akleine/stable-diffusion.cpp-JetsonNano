@@ -1272,6 +1272,7 @@ SDVersion ModelLoader::get_sd_version() {
     bool has_output_block_91  = false;
     bool has_attn_1024        = false;
     bool is_xl                = false;
+    bool has_tae_blocks       = false;
 
     for (auto& tensor_storage : tensor_storages) {
         if (tensor_storage.name.find("conditioner.embedders.1") != std::string::npos) {
@@ -1297,7 +1298,9 @@ SDVersion ModelLoader::get_sd_version() {
         if (tensor_storage.name.find("model.diffusion_model.output_blocks.9.1") != std::string::npos) {
             has_output_block_91 = true;
         }
-
+        if (tensor_storage.name.find("first_stage_model.decoder.layers.2.conv") != std::string::npos) {
+            has_tae_blocks = true;
+        }
         if (tensor_storage.name.find("model.diffusion_model.output_blocks.7.1.transformer_blocks.0.attn1.to_k.weight") != std::string::npos) {
             if (tensor_storage.ne[0] == 1024) {
                 has_attn_1024 = true;
@@ -1351,7 +1354,10 @@ SDVersion ModelLoader::get_sd_version() {
         if (!has_output_block_81) {
             return VERSION_SD2_MEDIUM_UNET;
         }
-        return VERSION_SD2;
+        if (!has_tae_blocks) {
+            return VERSION_SD2;
+        }
+        return VERSION_SD2_TAE_IN;
     }
     return VERSION_COUNT;
 }
@@ -1399,7 +1405,7 @@ std::vector<TensorStorage> remove_duplicates(const std::vector<TensorStorage>& v
 bool ModelLoader::load_tensors(on_new_tensor_cb_t on_new_tensor_cb, ggml_backend_t backend, bool enable_mmap) {
     std::vector<TensorStorage> processed_tensor_storages;
     for (auto& tensor_storage : tensor_storages) {
-        // LOG_DEBUG("%s", name.c_str());
+        // LOG_DEBUG("%s", tensor_storage.name.c_str());
 
         if (is_unused_tensor(tensor_storage.name)) {
             continue;

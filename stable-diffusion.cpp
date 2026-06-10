@@ -23,6 +23,7 @@ const char* model_version_to_str[] = {
     "SD 2.x Tiny UNet",
     "SD 2.x Medium UNet",
     "SD 2.x Small UNet",
+    "SD 2.x TAE incl",
     "SDXS-512-DS",
     "SDXS 0.9",
     "SDXL (Vega)",
@@ -193,8 +194,8 @@ public:
         LOG_DEBUG("ggml tensor size = %d bytes", (int)sizeof(ggml_tensor));
 
         if (taesd_path.size() > 0) {
-            if (version == VERSION_SDXS || version == VERSION_SDXS_09) {
-                LOG_WARN("SDXS version is using own tiny autoencoder");
+            if (version == VERSION_SDXS || version == VERSION_SDXS_09 || version == VERSION_SD2_TAE_IN) {
+                LOG_WARN("SD version is using own tiny autoencoder");
             } else {
                 use_tiny_autoencoder = true;
             }
@@ -234,7 +235,7 @@ public:
                 vae_type = GGML_TYPE_F32;  // avoid nan, not work...
             }
 
-            if (!use_tiny_autoencoder && version != VERSION_SDXS && version != VERSION_SDXS_09) {
+            if (!use_tiny_autoencoder && version != VERSION_SDXS && version != VERSION_SDXS_09 && version != VERSION_SD2_TAE_IN) {
                 if (vae_on_cpu && !ggml_backend_is_cpu(backend)) {
                     LOG_INFO("VAE Autoencoder: Using CPU backend");
                     vae_backend = ggml_backend_cpu_init();
@@ -248,7 +249,7 @@ public:
                 first_stage_model->get_param_tensors(tensors, "first_stage_model");
             } else {
                 tae_first_stage = std::make_shared<TinyAutoEncoder>(backend, model_data_type, vae_decode_only);
-                if (version == VERSION_SDXS || version == VERSION_SDXS_09) {
+                if (version == VERSION_SDXS || version == VERSION_SDXS_09 || version == VERSION_SD2_TAE_IN) {
                     if (!tae_first_stage->alloc_params_buffer()) {
                         return false;
                     }
@@ -301,7 +302,7 @@ public:
             size_t clip_params_mem_size = cond_stage_model->get_params_buffer_size();
             size_t unet_params_mem_size = diffusion_model->get_params_buffer_size();
             size_t vae_params_mem_size  = 0;
-            if (!use_tiny_autoencoder && version != VERSION_SDXS && version != VERSION_SDXS_09) {
+            if (!use_tiny_autoencoder && version != VERSION_SDXS && version != VERSION_SDXS_09 && version != VERSION_SD2_TAE_IN) {
                 vae_params_mem_size = first_stage_model->get_params_buffer_size();
             } else {
                 if (use_tiny_autoencoder && !tae_first_stage->load_from_file(taesd_path, enable_mmap)) {

@@ -35,7 +35,7 @@ Later sd.cpp (https://github.com/leejet/stable-diffusion.cpp) commits require a 
 | JPG support     |:white_check_mark:|:red_circle:      |:white_check_mark:|
 | MMAP support    |:white_check_mark:|:red_circle:      |:white_check_mark:|
 | CPU rng         |:white_check_mark:|:red_circle:      |:white_check_mark:|
-|tiny U-Net models|:white_check_mark:[^2]|:red_circle:  |:white_check_mark:|
+| tiny models     |:white_check_mark:[^2]|:red_circle:  |:white_check_mark:|
 | Flash Attention |:white_check_mark:|:red_circle:      |:white_check_mark:[^1]|
 | Winograd        |:red_circle:      |:red_circle:      |:white_check_mark:[^1]|
 
@@ -156,10 +156,18 @@ some more models with **small** and **medium** sized U-Nets are implemented *her
 * https://huggingface.co/nota-ai/bk-sdm-v2-small
 * https://huggingface.co/nota-ai/bk-sdm-v2-base
 
+another very fast SD turbo model is:
+* https://huggingface.co/cc-nms/tiny-sd-turbo
+
 There may be other usable models available online. Naturally, IDKiro's models will be the fastest since they require only one step in U-Net. For example, using sdxs-512-dreamshaper, you can generate a 512x512 PNG image in just 12 seconds! However, each model has its own advantages and limitations. Feel free to explore them all. Keep in mind that since the Jetson Nano has only 4GB of shared RAM (GPU/CPU), running some larger models may not be feasible.
 It is recommended to convert these models into the **safetensors** or preferably into **gguf** format. Creating a .safetensors file involves two steps, please see some hints in https://github.com/leejet/stable-diffusion.cpp/blob/master/docs/distilled_sd.md for detailed instructions.
-Quantization and creating **gguf** files is very well described here: https://github.com/leejet/stable-diffusion.cpp/blob/master/docs/quantization_and_gguf.md
+Quantization and creating **gguf** files is very well described here: https://github.com/leejet/stable-diffusion.cpp/blob/master/docs/quantization_and_gguf.md.
 
+See here for an example [creating a gguf](./docs/how-to-create-a-gguf-tensors-file.md) .
+For some of the mentioned models this work already has been done and some prepared safetensors or gguf files are available on Hugging Face:
+* https://huggingface.co/concedo/sdxs-512-tinySDdistilled-GGUF
+* https://huggingface.co/akleine/sdxs-09
+* https://huggingface.co/akleine/tiny-sd-turbo_q8_0
 
 
 ## Command line options overview:
