@@ -87,7 +87,7 @@ Of course the CPU mode is very slow, but uses Flash Attention and the Winograd a
 Of course you will only run *tiny* models on this *tiny* device, see below.
 If using f16 tensors do not try to extend the output picture dimensions much more than ```512 x 512```. For resolutions like ```512 x 768``` or models like Segmind's VEGA or SSD1B try weight types like ```q4_0``` (via option ```--type q4_0```).
 
-### Run example:
+### Run examples:
 ```
 ./sd  -m ~/SD_models/sd1/stable-diffusion-v1-5-pruned-emaonly-f16.gguf -W 512 -H 512 \
    -v --steps 3 --seed 123 \
@@ -129,7 +129,19 @@ ggml_cuda_init: found 1 CUDA devices:
 [INFO ] stable-diffusion.cpp:1083 - txt2img completed in 49.43s
 save result PNG image to 'output_1.png'
 ```
-As you can see, the process takes some time, even when using a GPU. Therefore, the use of LCM-LoRAs, tiny SD models and ```--taesd``` is strongly recommended.
+As you can see, the process takes some time, even when using a GPU. Therefore, the use of LCM-LoRAs, tiny SD models, ```--vae-tiling```  and ```--taesd``` is strongly recommended.
+Sometimes a little fine-tuning is required. Here's another example:
+```
+./sd -m ~/SD_models/sdxl_tiny/SDXL-Flash_Mini.safetensors --type q4_0 \
+   -v --steps 6 --width 768 --height 512 --seed -1 \
+   --taesd  ~/SD_models/sdxl/taesdxl.safetensors \
+   --sampling-method dpm++2s_a \
+   --cfg-scale 3 \
+   --vae-tiling \
+   -p "a red fox on green grass, full color SD amateur photo" \
+   -n "cropped face, cut off, close-up, out of frame, bad composition" \
+   -o output_sdxl_flash_mini
+```
 
 ## Models
 
@@ -144,10 +156,12 @@ using some other **tiny models** is recommended, e.g. this models of SD1 and SD2
 * https://huggingface.co/nota-ai/bk-sdm-v2-tiny
 * https://huggingface.co/IDKiro/sdxs-512-dreamshaper
 * https://huggingface.co/IDKiro/sdxs-512-0.9
+* https://huggingface.co/stabilityai/sd-turbo
 
 also using some distilled SDXL models is possible:
 * https://huggingface.co/segmind/Segmind-Vega
-* https://huggingface.co/stabilityai/sd-turbo
+* https://huggingface.co/segmind/SSD-1B
+* https://huggingface.co/sd-community/sdxl-flash-mini
 
 some more models with **small** and **medium** sized U-Nets are implemented *here*, but *not* in leejet's master version:
 * https://huggingface.co/nota-ai/bk-sdm-small
