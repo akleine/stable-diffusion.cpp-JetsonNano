@@ -159,7 +159,8 @@ SD_API sd_image_t* txt2img(sd_ctx_t* sd_ctx,
                            int sample_steps,
                            int64_t seed,
                            int batch_count,
-                           float eta);
+                           float eta,
+                           int timestep_shift);
 
 typedef struct upscaler_ctx_t upscaler_ctx_t;
 

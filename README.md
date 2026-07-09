@@ -157,11 +157,13 @@ using some other **tiny models** is recommended, e.g. this models of SD1 and SD2
 * https://huggingface.co/IDKiro/sdxs-512-dreamshaper
 * https://huggingface.co/IDKiro/sdxs-512-0.9
 * https://huggingface.co/stabilityai/sd-turbo
+* https://huggingface.co/thuanz123/swiftbrush
 
-also using some distilled SDXL models is possible:
+also using some distilled SDXL models is possible, e.g.:
 * https://huggingface.co/segmind/Segmind-Vega
 * https://huggingface.co/segmind/SSD-1B
 * https://huggingface.co/sd-community/sdxl-flash-mini
+* https://huggingface.co/mrfatso/NitroFusion-GGUF
 
 some more models with **small** and **medium** sized U-Nets are implemented *here*, but *not* in leejet's master version:
 * https://huggingface.co/nota-ai/bk-sdm-small
@@ -182,6 +184,7 @@ For some of the mentioned models this work already has been done and some prepar
 * https://huggingface.co/concedo/sdxs-512-tinySDdistilled-GGUF
 * https://huggingface.co/akleine/sdxs-09
 * https://huggingface.co/akleine/tiny-sd-turbo_q8_0
+* https://huggingface.co/turingevo/tiny-sd-gguf
 
 
 ## Command line options overview:
@@ -211,6 +214,7 @@ arguments:
   --rng {std_default, cuda, cpu}     RNG (default: cuda)
   -s SEED, --seed SEED               RNG seed (default: 42, use random seed for < 0)
   -b, --batch-count COUNT            number of images to generate.
+  --timestep-shift N                 shift timestep for NitroFusion models, default: 0, recommended N for NitroSD-Realism around 250 and 500 for NitroSD-Vibrant
   --sampling-method {SAMPLER}        sampling method (default: "euler_a")
                                      SAMPLER: one of {euler, euler_a, heun, dpm2, dpm++2s_a, dpm++2m, dpm++2mv2, ipndm, ipndm_v, lcm, ddim_trailing, tcd}
   --scheduler {SCHEDULER}            Denoiser sigma scheduler (default: discrete)

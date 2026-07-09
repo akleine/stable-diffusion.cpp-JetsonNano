@@ -664,7 +664,12 @@ public:
                         float cfg_scale,
                         sample_method_t method,
                         const std::vector<float>& sigmas,
-                        float eta) {
+                        float eta,
+                        int timestep_shift) {
+        if (timestep_shift > 0 && !sd_version_is_sdxl(version)) {
+            LOG_WARN("timestep shifting is only supported for SDXL models!");
+            timestep_shift = 0;
+        }
         size_t steps = sigmas.size() - 1;
         // x_t = load_tensor_from_file(work_ctx, "./rand0.bin");
         // print_ggml_tensor(x_t);
@@ -719,7 +724,18 @@ public:
             }
 
             float t = denoiser->sigma_to_t(sigma);
-            std::vector<float> timesteps_vec(x->ne[3], t);  // [N, ]
+
+            std::vector<float> timesteps_vec;
+            if (timestep_shift > 0 && sd_version_is_sdxl(version)) {
+                float shifted_t_float = t * (float(timestep_shift) / float(TIMESTEPS));
+                int64_t shifted_t     = static_cast<int64_t>(roundf(shifted_t_float));
+                shifted_t             = std::max((int64_t)0, std::min((int64_t)(TIMESTEPS - 1), shifted_t));
+                LOG_DEBUG("shifting timestep from %.2f to %" PRId64 " (sigma: %.4f)", t, shifted_t, sigma);
+                timesteps_vec.assign(1, (float)shifted_t);
+            } else {
+                timesteps_vec.assign(1, t);
+            }
+
             auto timesteps = vector_to_ggml_tensor(work_ctx, timesteps_vec);
 
             copy_ggml_tensor(noised_input, input);
@@ -753,6 +769,18 @@ public:
             float* vec_input     = (float*)input->data;
             float* positive_data = (float*)out_cond->data;
             int ne_elements      = (int)ggml_nelements(denoised);
+
+            if (timestep_shift > 0 && sd_version_is_sdxl(version)) {
+                int64_t shifted_t_idx              = static_cast<int64_t>(roundf(timesteps_vec[0]));
+                float shifted_sigma                = denoiser->t_to_sigma((float)shifted_t_idx);
+                std::vector<float> shifted_scaling = denoiser->get_scalings(shifted_sigma);
+                float shifted_c_skip               = shifted_scaling[0];
+                float shifted_c_out                = shifted_scaling[1];
+                float shifted_c_in                 = shifted_scaling[2];
+                c_skip                             = shifted_c_skip * c_in / shifted_c_in;
+                c_out                              = shifted_c_out;
+            }
+
             for (int i = 0; i < ne_elements; i++) {
                 float latent_result = positive_data[i];
                 if (has_unconditioned) {
@@ -917,7 +945,8 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
                            const std::vector<float>& sigmas,
                            int64_t seed,
                            int batch_count,
-                           float eta) {
+                           float eta,
+                           int timestep_shift) {
     if (seed < 0) {
         // Generally, when using the provided command line, the seed is always >0.
         // However, to prevent potential issues if 'stable-diffusion.cpp' is invoked as a library
@@ -995,7 +1024,8 @@ sd_image_t* generate_image(sd_ctx_t* sd_ctx,
                                                      cfg_scale,
                                                      sample_method,
                                                      sigmas,
-                                                     eta);
+                                                     eta,
+                                                     timestep_shift);
         // struct ggml_tensor* x_0 = load_tensor_from_file(ctx, "samples_ddim.bin");
         // print_ggml_tensor(x_0);
         int64_t sampling_end = ggml_time_ms();
@@ -1055,7 +1085,8 @@ sd_image_t* txt2img(sd_ctx_t* sd_ctx,
                     int sample_steps,
                     int64_t seed,
                     int batch_count,
-                    float eta) {
+                    float eta,
+                    int timestep_shift) {
     LOG_DEBUG("txt2img %dx%d", width, height);
     if (sd_ctx == nullptr) {
         return nullptr;
@@ -1087,7 +1118,8 @@ sd_image_t* txt2img(sd_ctx_t* sd_ctx,
                                                sigmas,
                                                seed,
                                                batch_count,
-                                               eta);
+                                               eta,
+                                               timestep_shift);
     size_t t1                 = ggml_time_ms();
     LOG_INFO("txt2img completed in %.2fs", (t1 - t0) * 1.0f / 1000);
     return result_images;

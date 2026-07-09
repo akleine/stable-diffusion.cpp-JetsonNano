@@ -75,12 +75,13 @@ struct SDParams {
     std::string output_path = "output.png";
     std::string prompt;
     std::string negative_prompt;
-    float cfg_scale = 7.0f;
-    float eta       = 0.f;
-    int clip_skip   = -1;  // <= 0 represents unspecified
-    int width       = 512;
-    int height      = 512;
-    int batch_count = 1;
+    float cfg_scale    = 7.0f;
+    float eta          = 0.f;
+    int timestep_shift = 0;
+    int clip_skip      = -1;  // <= 0 represents unspecified
+    int width          = 512;
+    int height         = 512;
+    int batch_count    = 1;
 
     sample_method_t sample_method = EULER_A;
     scheduler_t scheduler         = DEFAULT;
@@ -114,6 +115,7 @@ void print_params(SDParams params) {
     printf("    negative_prompt:   %s\n", params.negative_prompt.c_str());
     printf("    cfg_scale:         %.2f\n", params.cfg_scale);
     printf("    eta:               %.2f\n", params.eta);
+    printf("    timestep-shift:    %d\n", params.timestep_shift);
     printf("    clip_skip:         %d\n", params.clip_skip);
     printf("    width:             %d\n", params.width);
     printf("    height:            %d\n", params.height);
@@ -159,6 +161,7 @@ void print_usage(int argc, const char* argv[]) {
     printf("  --rng {std_default, cuda, cpu}     RNG (default: cuda)\n");
     printf("  -s SEED, --seed SEED               RNG seed (default: 42, use random seed for < 0)\n");
     printf("  -b, --batch-count COUNT            number of images to generate.\n");
+    printf("  --timestep-shift N                 shift timestep for NitroFusion models, default: 0, recommended N for NitroSD-Realism around 250 and 500 for NitroSD-Vibrant\n");
     printf("  --sampling-method {SAMPLER}        sampling method (default: \"euler_a\")\n");
     printf("                                     SAMPLER: one of {euler, euler_a, heun, dpm2, dpm++2s_a, dpm++2m, dpm++2mv2, ipndm, ipndm_v, lcm, ddim_trailing, tcd}\n");
     printf("  --scheduler {SCHEDULER}            Denoiser sigma scheduler (default: discrete)\n");
@@ -322,6 +325,16 @@ void parse_args(int argc, const char** argv, SDParams& params) {
                 break;
             }
             params.sample_steps = std::stoi(argv[i]);
+        } else if (arg == "--timestep-shift") {
+            if (++i >= argc) {
+                invalid_arg = true;
+                break;
+            }
+            params.timestep_shift = std::stoi(argv[i]);
+            if (params.timestep_shift < 0 || params.timestep_shift > 1000) {
+                fprintf(stderr, "error: timestep-shift must be between 0 and 1000\n");
+                exit(1);
+            }
         } else if (arg == "--clip-skip") {
             if (++i >= argc) {
                 invalid_arg = true;
@@ -481,6 +494,7 @@ std::string get_image_params(SDParams params, int64_t seed) {
     parameter_string += "Steps: " + std::to_string(params.sample_steps) + ", ";
     parameter_string += "CFG scale: " + std::to_string(params.cfg_scale) + ", ";
     parameter_string += "Eta: " + std::to_string(params.eta) + ", ";
+    parameter_string += "TimestepShift: " + std::to_string(params.timestep_shift) + ", ";
     parameter_string += "Seed: " + std::to_string(seed) + ", ";
     parameter_string += "Size: " + std::to_string(params.width) + "x" + std::to_string(params.height) + ", ";
     parameter_string += "Model: " + sd_basename(params.model_path) + ", ";
@@ -606,7 +620,8 @@ int main(int argc, const char* argv[]) {
                                   params.sample_steps,
                                   params.seed,
                                   params.batch_count,
-                                  params.eta);
+                                  params.eta,
+                                  params.timestep_shift);
     if (results == NULL) {
         printf("generate failed\n");
         free_sd_ctx(sd_ctx);
